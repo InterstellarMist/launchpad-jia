@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import styles from "@/lib/styles/screens/uploadCV.module.scss";
+import { assetConstants } from "@/lib/utils/constantsV2";
 import InterviewQuestionGeneratorV2 from "./InterviewQuestionGeneratorV2";
 import RichTextEditor from "@/lib/components/CareerComponents/RichTextEditor";
 import CustomDropdown from "@/lib/components/CareerComponents/CustomDropdown";
@@ -122,6 +124,20 @@ export default function CareerForm({
   const [showSaveModal, setShowSaveModal] = useState("");
   const [isSavingCareer, setIsSavingCareer] = useState(false);
   const savingCareerRef = useRef(false);
+
+  // Segmented Form Steps
+  const [currentStep, setCurrentStep] = useState(
+    "Career Details & Team Access"
+  );
+
+  const step = [
+    "Career Details & Team Access",
+    "CV Review & Pre-Screening",
+    "AI Interview Setup",
+    "Pipeline Stages",
+    "Review Career",
+  ];
+  const stepStatus = ["Completed", "Pending", "In Progress"];
 
   const isFormValid = () => {
     return (
@@ -296,6 +312,24 @@ export default function CareerForm({
     }
   };
 
+  function processState(index, isAdvance = false) {
+    const currentStepIndex = step.indexOf(currentStep);
+
+    if (currentStepIndex == index) {
+      if (index == stepStatus.length - 1) {
+        return stepStatus[0];
+      }
+
+      // return isAdvance || userCV || buildingCV ? stepStatus[2] : stepStatus[1];
+    }
+
+    if (currentStepIndex > index) {
+      return stepStatus[0];
+    }
+
+    return stepStatus[1];
+  }
+
   useEffect(() => {
     const parseProvinces = () => {
       setProvinceList(philippineCitiesAndProvinces.provinces);
@@ -468,6 +502,84 @@ export default function CareerForm({
           </div>
         </div>
       )}
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            gap: 32,
+            width: "100%",
+          }}
+        >
+          {step.map((_, index) => (
+            <div
+              style={{
+                maxWidth: 300,
+                display: "flex",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 220,
+              }}
+              key={index}
+            >
+              <img
+                alt=""
+                src={
+                  assetConstants[
+                    processState(index, true).toLowerCase().replace(" ", "_")
+                  ]
+                }
+              />
+              {index < step.length - 1 && (
+                <hr
+                  style={{
+                    height: 6,
+                    border: "unset",
+                    borderRadius: 10,
+                    margin: 0,
+                    width: index === step.length - 1 ? "unset" : "100%",
+                    background:
+                      processState(index).toLowerCase().replace(" ", "_") ===
+                      "completed"
+                        ? "linear-gradient(90deg, #fccec0 0%, #ebacc9 33%, #ceb6da 66%, #9fcaed 100%)"
+                        : processState(index)
+                            .toLowerCase()
+                            .replace(" ", "_") === "pending"
+                        ? "#d9d9d9"
+                        : "linear-gradient(90deg, #fccec0 0%, #ebacc9 33%, #ceb6da 66%, #9fcaed 100%)",
+                  }}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", flexDirection: "row", gap: 32 }}>
+          {step.map((item, index) => (
+            <span
+              style={{
+                width: index === step.length - 1 ? "unset" : "100%",
+                maxWidth: 300,
+                fontWeight: 700,
+                fontSize: 14,
+                lineHeight: "20px",
+                color:
+                  processState(index).toLowerCase().replace(" ", "_") ===
+                  "completed"
+                    ? "#181D27"
+                    : processState(index).toLowerCase().replace(" ", "_") ===
+                      "pending"
+                    ? "#A4A7AE"
+                    : "#181D27",
+              }}
+              key={index}
+            >
+              {item}
+            </span>
+          ))}
+        </div>
+      </div>
       <div
         style={{
           display: "flex",
