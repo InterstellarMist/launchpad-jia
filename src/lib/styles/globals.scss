@@ -213,13 +213,15 @@ td {
   border-radius: 8px !important;
   color: #181d27 !important;
   font-size: 1rem !important;
+  box-shadow: 0px 1px 2px 0px #0A0D120D !important;
 
   &::placeholder {
     color: #717680 !important;
   }
 
   &:focus {
-    border: 2px solid #5e39d6 !important;
+    // padding: 8px 11px;
+    outline: 2px solid #5e39d6 !important;
     box-shadow: none !important;
   }
 }
@@ -805,15 +807,22 @@ th[scope="col"] {
   justify-content: space-between;
   gap: 10px;
   background: #fff;
-  border: 1px solid #ddd;
-  padding: 10px 20px;
+  color: #181d27;
+  border: 1px solid #e9eaeb;
+  padding: 10px 12px;
   border-radius: 8px;
   transition: 0.3s;
   cursor: pointer;
+  box-shadow: 0px 1px 2px 0px #0A0D120D ;
 
   &:hover {
     background: #f8f9fa;
     border-color: #ddd;
+  }
+
+  &:focus {
+    outline: 2px solid #5e39d6 !important;
+    box-shadow: none !important;
   }
 }
 
@@ -2113,8 +2122,8 @@ $gifURL: "/gr-1.gif";
 .switch {
   position: relative;
   display: inline-block;
-  width: 44px;
-  height: 24px;
+  width: 36px;
+  height: 20px;
 }
 
 /* Hide default HTML checkbox */
@@ -2140,8 +2149,8 @@ $gifURL: "/gr-1.gif";
 .slider:before {
   position: absolute;
   content: "";
-  height: 18px;
-  width: 18px;
+  height: 14px;
+  width: 14px;
   left: 3px;
   bottom: 3px;
   background-color: white;
@@ -2165,14 +2174,14 @@ input:focus + .slider {
 }
 
 input:checked + .slider:before {
-  -webkit-transform: translateX(20px);
-  -ms-transform: translateX(20px);
-  transform: translateX(20px);
+  -webkit-transform: translateX(16px);
+  -ms-transform: translateX(16px);
+  transform: translateX(16px);
 }
 
 /* Rounded sliders */
 .slider.round {
-  border-radius: 34px;
+  border-radius: 20px;
 }
 
 .slider.round:before {
