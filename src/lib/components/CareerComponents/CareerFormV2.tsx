@@ -48,6 +48,204 @@ const employmentTypeOptions = [
   },
 ];
 
+const SegmentedFormProgress = ({
+  currentStep,
+  hasErrors,
+  hasChanges,
+}: {
+  currentStep: string;
+  hasErrors: boolean;
+  hasChanges: boolean;
+}) => {
+  const step = [
+    "Career Details & Team Access",
+    "CV Review & Pre-Screening",
+    "AI Interview Setup",
+    "Pipeline Stages",
+    "Review Career",
+  ];
+  const stepStatus = ["completed", "pending", "in_progress", "error"];
+
+  const processState = (index: number, isAdvance = false) => {
+    const currentStepIndex = step.indexOf(currentStep);
+
+    if (currentStepIndex == index) {
+      if (index == stepStatus.length - 1) {
+        return stepStatus[0];
+      }
+      return hasErrors
+        ? stepStatus[3]
+        : isAdvance || hasChanges
+        ? stepStatus[2]
+        : stepStatus[1];
+    }
+
+    if (currentStepIndex > index) {
+      return stepStatus[0];
+    }
+
+    return stepStatus[1];
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 12,
+        maxWidth: 1620,
+        width: "100%",
+        flexShrink: 0,
+      }}
+    >
+      {step.map((item, index) => (
+        <div
+          key={index}
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: 16,
+            width: index === step.length - 1 ? "auto" : "100%",
+            flexShrink: index === step.length - 1 ? 0 : 1,
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <img
+              alt=""
+              src={assetConstants[processState(index, true)]}
+              height={24}
+              width={24}
+            />
+            {index < step.length - 1 && (
+              <hr
+                style={{
+                  width: "100%",
+                  height: 6,
+                  border: "unset",
+                  borderRadius: 10,
+                  margin: 0,
+                  background:
+                    processState(index) === "completed"
+                      ? "linear-gradient(90deg, #9FCAED 0%, #CEB6DA 34%, #EBACC9 67%, #FCCEC0 100%)"
+                      : processState(index) === "in_progress"
+                      ? "linear-gradient(90deg, #9FCAED 0%, #CEB6DA 17%, #EBACC9 34%, #FCCEC0 50%, #d9d9d9 50%, #d9d9d9)"
+                      : "#d9d9d9",
+                }}
+              />
+            )}
+          </div>
+          <span
+            style={{
+              width: index === step.length - 1 ? "initial" : "100%",
+              fontWeight: 700,
+              fontSize: 14,
+              lineHeight: "20px",
+              color:
+                processState(index, true) === "pending" ? "#717680" : "#181D27",
+            }}
+            key={index}
+          >
+            {item}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const Card = ({
+  title,
+  children,
+  icon,
+}: {
+  title: string;
+  children: React.ReactNode;
+  icon?: string;
+}) => {
+  return (
+    <div className="layered-card-middle">
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 8,
+          margin: "4px 12px 0px 12px",
+        }}
+      >
+        {icon && (
+          <img
+            src={assetConstants[icon]}
+            alt="icon"
+            height={20}
+            width={20}
+            style={{ marginRight: 0 }}
+          />
+        )}
+        <h1
+          style={{
+            fontSize: 16,
+            color: "#181D27",
+            fontWeight: 700,
+            lineHeight: "24px",
+            margin: 0,
+          }}
+        >
+          {title}
+        </h1>
+      </div>
+      <div className="layered-card-content" style={{ gap: "24px" }}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+const TextInput = ({
+  label,
+  value,
+  onChange,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  placeholder: string;
+  onChange: (value: string) => void;
+}) => {
+  return (
+    <div style={{ flex: 1 }}>
+      <p
+        style={{
+          fontSize: 14,
+          color: "#414651",
+          fontWeight: 500,
+          marginBottom: 6,
+        }}
+      >
+        {label}
+      </p>
+      <input
+        value={value}
+        className="form-control"
+        placeholder={placeholder}
+        onChange={(e) => onChange(e.target.value || "")}
+        style={{
+          fontSize: 16,
+          color: "#181D27",
+          fontWeight: 500,
+          borderRadius: "8px",
+        }}
+      />
+    </div>
+  );
+};
+
 export default function CareerForm({
   career,
   formType,
@@ -125,19 +323,13 @@ export default function CareerForm({
   const [isSavingCareer, setIsSavingCareer] = useState(false);
   const savingCareerRef = useRef(false);
 
+  // FIXME:
   // Segmented Form Steps
   const [currentStep, setCurrentStep] = useState(
     "Career Details & Team Access"
   );
-
-  const step = [
-    "Career Details & Team Access",
-    "CV Review & Pre-Screening",
-    "AI Interview Setup",
-    "Pipeline Stages",
-    "Review Career",
-  ];
-  const stepStatus = ["Completed", "Pending", "In Progress"];
+  const [hasChanges, setHasChanges] = useState(true);
+  const [hasErrors, setHasErrors] = useState(false);
 
   const isFormValid = () => {
     return (
@@ -312,24 +504,6 @@ export default function CareerForm({
     }
   };
 
-  function processState(index, isAdvance = false) {
-    const currentStepIndex = step.indexOf(currentStep);
-
-    if (currentStepIndex == index) {
-      if (index == stepStatus.length - 1) {
-        return stepStatus[0];
-      }
-
-      // return isAdvance || userCV || buildingCV ? stepStatus[2] : stepStatus[1];
-    }
-
-    if (currentStepIndex > index) {
-      return stepStatus[0];
-    }
-
-    return stepStatus[1];
-  }
-
   useEffect(() => {
     const parseProvinces = () => {
       setProvinceList(philippineCitiesAndProvinces.provinces);
@@ -503,83 +677,21 @@ export default function CareerForm({
         </div>
       )}
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            gap: 32,
-            width: "100%",
-          }}
-        >
-          {step.map((_, index) => (
-            <div
-              style={{
-                maxWidth: 300,
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 220,
-              }}
-              key={index}
-            >
-              <img
-                alt=""
-                src={
-                  assetConstants[
-                    processState(index, true).toLowerCase().replace(" ", "_")
-                  ]
-                }
-              />
-              {index < step.length - 1 && (
-                <hr
-                  style={{
-                    height: 6,
-                    border: "unset",
-                    borderRadius: 10,
-                    margin: 0,
-                    width: index === step.length - 1 ? "unset" : "100%",
-                    background:
-                      processState(index).toLowerCase().replace(" ", "_") ===
-                      "completed"
-                        ? "linear-gradient(90deg, #fccec0 0%, #ebacc9 33%, #ceb6da 66%, #9fcaed 100%)"
-                        : processState(index)
-                            .toLowerCase()
-                            .replace(" ", "_") === "pending"
-                        ? "#d9d9d9"
-                        : "linear-gradient(90deg, #fccec0 0%, #ebacc9 33%, #ceb6da 66%, #9fcaed 100%)",
-                  }}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "row", gap: 32 }}>
-          {step.map((item, index) => (
-            <span
-              style={{
-                width: index === step.length - 1 ? "unset" : "100%",
-                maxWidth: 300,
-                fontWeight: 700,
-                fontSize: 14,
-                lineHeight: "20px",
-                color:
-                  processState(index).toLowerCase().replace(" ", "_") ===
-                  "completed"
-                    ? "#181D27"
-                    : processState(index).toLowerCase().replace(" ", "_") ===
-                      "pending"
-                    ? "#A4A7AE"
-                    : "#181D27",
-              }}
-              key={index}
-            >
-              {item}
-            </span>
-          ))}
-        </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+        }}
+      >
+        <SegmentedFormProgress
+          currentStep={currentStep}
+          hasErrors={hasErrors}
+          hasChanges={hasChanges}
+        />
       </div>
+
+      {/* TODO: 1. Career Information */}
       <div
         style={{
           display: "flex",
@@ -593,60 +705,126 @@ export default function CareerForm({
       >
         <div
           style={{
-            width: "60%",
+            width: "70%",
             display: "flex",
             flexDirection: "column",
             gap: 8,
           }}
         >
-          <div className="layered-card-outer">
-            <div className="layered-card-middle">
-              <div
+          <Card title="1. Career Information">
+            <div>
+              <p
                 style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  alignItems: "center",
-                  gap: 8,
+                  fontSize: 14,
+                  color: "#181D27",
+                  fontWeight: 700,
+                  marginBottom: 8,
                 }}
               >
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    backgroundColor: "#181D27",
-                    borderRadius: "50%",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <i
-                    className="la la-suitcase"
-                    style={{ color: "#FFFFFF", fontSize: 20 }}
-                  ></i>
-                </div>
-                <span
-                  style={{ fontSize: 16, color: "#181D27", fontWeight: 700 }}
-                >
-                  Career Information
-                </span>
-              </div>
-              <div className="layered-card-content">
-                <span>Job Title</span>
-                <input
-                  value={jobTitle}
-                  className="form-control"
-                  placeholder="Enter job title"
-                  onChange={(e) => {
-                    setJobTitle(e.target.value || "");
-                  }}
-                ></input>
-                <span>Description</span>
-                <RichTextEditor setText={setDescription} text={description} />
+                Basic Information
+              </p>
+              <TextInput
+                label="Job Title"
+                value={jobTitle}
+                onChange={setJobTitle}
+                placeholder="Enter job title"
+              />
+            </div>
+            <div>
+              <p
+                style={{
+                  fontSize: 14,
+                  color: "#181D27",
+                  fontWeight: 700,
+                  marginBottom: 8,
+                }}
+              >
+                Work Setting
+              </p>
+              <div style={{ display: "flex", gap: 16 }}>
+                <TextInput
+                  label="Employment Type"
+                  value={employmentType}
+                  onChange={setEmploymentType}
+                  placeholder="Choose employment type"
+                />
+                <TextInput
+                  label="Arrangement"
+                  value={workSetup}
+                  onChange={setWorkSetup}
+                  placeholder="Choose work arrangement"
+                />
               </div>
             </div>
-          </div>
-
+            <div>
+              <p
+                style={{
+                  fontSize: 14,
+                  color: "#181D27",
+                  fontWeight: 700,
+                  marginBottom: 8,
+                }}
+              >
+                Location
+              </p>
+              <div style={{ display: "flex", gap: 16 }}>
+                <div style={{ display: "flex", gap: 16 }}>
+                  <TextInput
+                    label="Country"
+                    value={country}
+                    onChange={setCountry}
+                    placeholder="Choose country"
+                  />
+                </div>
+                <div style={{ display: "flex", gap: 16 }}>
+                  <TextInput
+                    label="Province"
+                    value={province}
+                    onChange={setProvince}
+                    placeholder="Choose province"
+                  />
+                </div>
+                <div style={{ display: "flex", gap: 16 }}>
+                  <TextInput
+                    label="City"
+                    value={city}
+                    onChange={setCity}
+                    placeholder="Choose city"
+                  />
+                </div>
+              </div>
+            </div>
+            <div>
+              <p
+                style={{
+                  fontSize: 14,
+                  color: "#181D27",
+                  fontWeight: 700,
+                  marginBottom: 8,
+                }}
+              >
+                Salary
+              </p>
+              <div style={{ display: "flex", gap: 16 }}>
+                <TextInput
+                  label="Minimum Salary"
+                  value={minimumSalary}
+                  onChange={setMinimumSalary}
+                  placeholder="Enter minimum salary"
+                />
+                <TextInput
+                  label="Maximum Salary"
+                  value={maximumSalary}
+                  onChange={setMaximumSalary}
+                  placeholder="Enter maximum salary"
+                />
+              </div>
+            </div>
+          </Card>
+          <Card title="2. Job Description">
+            {/* TODO: Edit Rich Text Editor */}
+            <RichTextEditor setText={setDescription} text={description} />
+          </Card>
           <InterviewQuestionGeneratorV2
             questions={questions}
             setQuestions={(questions) => setQuestions(questions)}
@@ -655,14 +833,36 @@ export default function CareerForm({
           />
         </div>
 
+        {/* FIXME: Right Sidebar */}
         <div
           style={{
-            width: "40%",
+            width: "30%",
             display: "flex",
             flexDirection: "column",
             gap: 8,
           }}
         >
+          <Card title="Tips" icon="tips">
+            <p style={{ fontSize: 14, color: "#717680", fontWeight: 500 }}>
+              <span style={{ fontWeight: 700, color: "#181D27" }}>
+                Use clear, standard job titles
+              </span>{" "}
+              for better searchability (e.g., “Software Engineer” instead of
+              “Code Ninja” or “Tech Rockstar”).
+              <br />
+              <span style={{ fontWeight: 700, color: "#181D27" }}>
+                Avoid abbreviations
+              </span>{" "}
+              or internal role codes that applicants may not understand (e.g.,
+              use “QA Engineer” instead of “QE II” or “QA-TL”).
+              <br />
+              <span style={{ fontWeight: 700, color: "#181D27" }}>
+                Keep it concise
+              </span>{" "}
+              – job titles should be no more than a few words (2–4 max),
+              avoiding fluff or marketing terms.
+            </p>
+          </Card>
           <div className="layered-card-outer">
             <div className="layered-card-middle">
               <div
