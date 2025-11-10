@@ -1,25 +1,22 @@
 import { assetConstants } from "@/lib/utils/constantsV2";
 
 export const SegmentedFormProgressBar = ({
+  steps,
   currentStep,
   hasErrors,
   hasChanges,
+  onClick,
 }: {
+  steps: string[];
   currentStep: string;
   hasErrors: boolean;
   hasChanges: boolean;
+  onClick: (step: string) => void;
 }) => {
-  const step = [
-    "Career Details & Team Access",
-    "CV Review & Pre-Screening",
-    "AI Interview Setup",
-    "Pipeline Stages",
-    "Review Career",
-  ];
   const stepStatus = ["completed", "pending", "in_progress", "error"];
 
   const processState = (index: number, isAdvance = false) => {
-    const currentStepIndex = step.indexOf(currentStep);
+    const currentStepIndex = steps.indexOf(currentStep);
 
     if (currentStepIndex == index) {
       if (index == stepStatus.length - 1) {
@@ -56,15 +53,15 @@ export const SegmentedFormProgressBar = ({
           flexShrink: 0,
         }}
       >
-        {step.map((item, index) => (
+        {steps.map((item, index) => (
           <div
             key={index}
             style={{
               display: "flex",
               flexDirection: "column",
               gap: 16,
-              width: index === step.length - 1 ? "auto" : "100%",
-              flexShrink: index === step.length - 1 ? 0 : 1,
+              width: index === steps.length - 1 ? "auto" : "100%",
+              flexShrink: index === steps.length - 1 ? 0 : 1,
             }}
           >
             <div
@@ -78,14 +75,16 @@ export const SegmentedFormProgressBar = ({
               <img
                 alt=""
                 src={assetConstants[processState(index, true)]}
-                height={24}
-                width={24}
+                height={20}
+                width={20}
+                onClick={() => onClick(item)}
+                style={{ cursor: "pointer" }}
               />
-              {index < step.length - 1 && (
+              {index < steps.length - 1 && (
                 <hr
                   style={{
                     width: "100%",
-                    height: 6,
+                    height: 4,
                     border: "unset",
                     borderRadius: 10,
                     margin: 0,
@@ -101,7 +100,7 @@ export const SegmentedFormProgressBar = ({
             </div>
             <span
               style={{
-                width: index === step.length - 1 ? "initial" : "100%",
+                width: index === steps.length - 1 ? "initial" : "100%",
                 fontWeight: 700,
                 fontSize: 14,
                 lineHeight: "20px",

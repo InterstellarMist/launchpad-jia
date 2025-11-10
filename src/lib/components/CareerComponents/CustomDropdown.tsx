@@ -2,32 +2,59 @@
 import { useState } from "react";
 
 export default function CustomDropdown(props) {
-  const { onSelectSetting, screeningSetting, settingList, placeholder } = props;
+  const {
+    onSelect,
+    value,
+    options,
+    placeholder,
+    width,
+    size = "sm",
+    hasError,
+  } = props;
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
-    <div className="dropdown" style={{ flex: 1, width: "100%" }}>
+    <div className="dropdown" style={{ width: width ? `${width}px` : "100%" }}>
       <button
-        disabled={settingList.length === 0}
+        disabled={options?.length === 0}
         className="dropdown-btn fade-in-bottom"
-        style={{ width: "100%", textTransform: "capitalize" }}
+        style={{
+          width: "100%",
+          border: hasError ? "1px solid #FDA29B" : "1px solid #E9EAEB",
+        }}
         type="button"
         onClick={() => setDropdownOpen((v) => !v)}
       >
         <span
           style={{
-            fontSize: 16,
+            fontSize: size === "sm" ? 16 : 14,
             fontWeight: 500,
-            color: `${screeningSetting ? "#181D27" : "#717680"}`,
+            color: `${
+              value ? (size === "sm" ? "#181D27" : "#414651") : "#717680"
+            }`,
+            textTransform: value ? "capitalize" : "none",
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 8,
           }}
         >
-          <i
-            className={
-              settingList.find((setting) => setting.name === screeningSetting)
-                ?.icon
-            }
-          ></i>{" "}
-          {screeningSetting?.replace("_", " ") || placeholder}
+          {options
+            .find((option) => option.name === value)
+            ?.icon?.includes("la") && (
+            <i
+              className={options.find((option) => option.name === value)?.icon}
+            ></i>
+          )}{" "}
+          {options
+            .find((option) => option.name === value)
+            ?.icon?.includes("svg") && (
+            <img
+              src={options.find((option) => option.name === value)?.icon}
+              alt={options.find((option) => option.name === value)?.name}
+            />
+          )}{" "}
+          {value?.replace("_", " ") || placeholder}
         </span>
         <i className="la la-angle-down ml-10"></i>
       </button>
@@ -41,20 +68,20 @@ export default function CustomDropdown(props) {
           overflowY: "auto",
         }}
       >
-        {settingList.map((setting, index) => (
+        {options.map((option, index) => (
           <div style={{ borderBottom: "1px solid #ddd" }} key={index}>
             <button
+              type="button"
               className="dropdown-item d-flex align-items-center"
               style={{
                 minWidth: 220,
-                borderRadius: screeningSetting === setting.name ? 0 : 10,
+                borderRadius: value === option.name ? 0 : 10,
                 overflow: "hidden",
                 paddingBottom: 10,
                 paddingTop: 10,
                 color: "#181D27",
-                fontWeight: screeningSetting === setting.name ? 700 : 500,
-                background:
-                  screeningSetting === setting.name ? "#F8F9FC" : "transparent",
+                fontWeight: value === option.name ? 700 : 500,
+                background: value === option.name ? "#F8F9FC" : "transparent",
                 display: "flex",
                 flexDirection: "row",
                 justifyContent: "space-between",
@@ -63,7 +90,7 @@ export default function CustomDropdown(props) {
                 textTransform: "capitalize",
               }}
               onClick={() => {
-                onSelectSetting(setting.name);
+                onSelect(option.name);
                 setDropdownOpen(false);
               }}
             >
@@ -75,10 +102,13 @@ export default function CustomDropdown(props) {
                   gap: "5px",
                 }}
               >
-                {setting.icon && <i className={setting.icon}></i>}{" "}
-                {setting.name?.replace("_", " ")}
+                {option.icon?.includes("la") && <i className={option.icon}></i>}{" "}
+                {option.icon?.includes("svg") && (
+                  <img src={option.icon} alt={option.name} />
+                )}{" "}
+                {option.name?.replace("_", " ")}
               </div>
-              {setting.name === screeningSetting && (
+              {option.name === value && (
                 <i
                   className="la la-check"
                   style={{

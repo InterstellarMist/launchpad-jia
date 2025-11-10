@@ -1,80 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useImperativeHandle, Ref } from "react";
 import philippineCitiesAndProvinces from "../../../../../public/philippines-locations.json";
-import InterviewQuestionGeneratorV2 from "../InterviewQuestionGeneratorV2";
-import CustomDropdown from "../CustomDropdown";
 import { Card } from "../FormComponents/Card";
 import { TextInput } from "../FormComponents/TextInput";
 import { DropdownInput } from "../FormComponents/DropdownInput";
 import { CurrencyInput } from "../FormComponents/CurrencyInput";
 import RichTextEditor from "../../CareerComponents/RichTextEditor";
+import { Label } from "../FormComponents/Label";
+import { UseFormSetValue, useForm, Control, Controller } from "react-hook-form";
+import { useAppContext } from "@/lib/context/AppContext";
 
-interface CareerInformationCardProps {
-  props: {
-    jobTitle: string;
-    setJobTitle: (value: string) => void;
-    employmentType: string;
-    setEmploymentType: (value: string) => void;
-    workSetup: string;
-    setWorkSetup: (value: string) => void;
-    country: string;
-    setCountry: (value: string) => void;
-    province: string;
-    setProvince: (value: string) => void;
-    city: string;
-    setCity: (value: string) => void;
-    minimumSalary: string;
-    setMinimumSalary: (value: string) => void;
-    maximumSalary: string;
-    setMaximumSalary: (value: string) => void;
-    provinceList: { name: string; key: string }[];
-    cityList: { name: string; key: string }[];
-    setCityList: (value: { name: string; key: string }[]) => void;
-    salaryNegotiable: boolean;
-    setSalaryNegotiable: (value: boolean) => void;
-  };
-}
-
-interface JobDescriptionCardProps {
-  text: string;
-  setText: (text: string) => void;
-}
-
-// Setting List icons
-const screeningSettingList = [
-  {
-    name: "Good Fit and above",
-    icon: "la la-check",
-  },
-  {
-    name: "Only Strong Fit",
-    icon: "la la-check-double",
-  },
-  {
-    name: "No Automatic Promotion",
-    icon: "la la-times",
-  },
-];
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  CareerDetailsFormData,
+  careerDetailsSchema,
+} from "@/lib/types/careerFormTypes";
+import axios from "axios";
+import { errorToast, successToast } from "@/lib/Utils";
 
 const workSetupOptions = [
-  {
-    name: "Fully Remote",
-  },
-  {
-    name: "Onsite",
-  },
-  {
-    name: "Hybrid",
-  },
+  { name: "Fully Remote" },
+  { name: "Onsite" },
+  { name: "Hybrid" },
 ];
 
-const employmentTypeOptions = [
-  {
-    name: "Full-Time",
-  },
-  {
-    name: "Part-Time",
-  },
-];
+const employmentTypeOptions = [{ name: "Full-Time" }, { name: "Part-Time" }];
 
 const tips = [
   {
@@ -117,120 +66,90 @@ export const TipsCard = () => {
   );
 };
 
-const CareerInformationCard = ({ props }: CareerInformationCardProps) => {
-  const {
-    jobTitle,
-    setJobTitle,
-    employmentType,
-    setEmploymentType,
-    workSetup,
-    setWorkSetup,
-    country,
-    setCountry,
-    province,
-    setProvince,
-    city,
-    setCity,
-    minimumSalary,
-    setMinimumSalary,
-    maximumSalary,
-    setMaximumSalary,
-    provinceList,
-    cityList,
-    setCityList,
-    salaryNegotiable,
-    setSalaryNegotiable,
-  } = props;
+const CareerInformationCard = ({
+  control,
+  setValue,
+}: {
+  control: Control<CareerDetailsFormData>;
+  setValue: UseFormSetValue<CareerDetailsFormData>;
+}) => {
+  const [cityList, setCityList] = useState([]);
+  const [provinceList, setProvinceList] = useState([]);
+
+  useEffect(() => {
+    const parseProvinces = () => {
+      setProvinceList(philippineCitiesAndProvinces.provinces);
+      const defaultProvince = philippineCitiesAndProvinces.provinces[0];
+      const cities = philippineCitiesAndProvinces.cities.filter(
+        (city) => city.province === defaultProvince.key
+      );
+      setCityList(cities);
+    };
+    parseProvinces();
+  }, []);
 
   return (
     <Card title="1. Career Information">
       <div>
-        <p
-          style={{
-            fontSize: 14,
-            color: "#181D27",
-            fontWeight: 700,
-            marginBottom: 8,
-          }}
-        >
-          Basic Information
-        </p>
+        <Label text="Basic Information" />
         <TextInput
           label="Job Title"
-          value={jobTitle}
-          onChange={setJobTitle}
           placeholder="Enter job title"
+          control={control}
+          name="jobTitle"
         />
       </div>
       <div>
-        <p
-          style={{
-            fontSize: 14,
-            color: "#181D27",
-            fontWeight: 700,
-            marginBottom: 8,
-          }}
-        >
-          Work Setting
-        </p>
+        <Label text="Work Setting" />
         <div style={{ display: "flex", gap: 16 }}>
           <DropdownInput
             label="Employment Type"
-            value={employmentType}
-            onChange={setEmploymentType}
             options={employmentTypeOptions}
-            placeholder="Select employment type"
+            placeholder="Choose employment type"
+            control={control}
+            name="employmentType"
           />
           <DropdownInput
             label="Arrangement"
-            value={workSetup}
-            onChange={setWorkSetup}
             options={workSetupOptions}
             placeholder="Choose work arrangement"
+            control={control}
+            name="workSetup"
           />
         </div>
       </div>
       <div>
-        <p
-          style={{
-            fontSize: 14,
-            color: "#181D27",
-            fontWeight: 700,
-            marginBottom: 8,
-          }}
-        >
-          Location
-        </p>
+        <Label text="Location" />
         <div style={{ display: "flex", gap: 16 }}>
           <DropdownInput
             label="Country"
-            value={country}
-            onChange={setCountry}
             options={[]}
             placeholder="Choose country"
+            control={control}
+            name="country"
           />
           <DropdownInput
             label="State / Province"
-            value={province}
+            control={control}
+            name="province"
             onChange={(province) => {
-              setProvince(province);
+              setValue("province", province);
               const provinceObj = provinceList.find((p) => p.name === province);
               const cities = philippineCitiesAndProvinces.cities.filter(
                 (city) => city.province === provinceObj.key
               );
-              // TODO: fix type error
               setCityList(cities);
-              setCity(cities[0].name);
+              setValue("city", cities[0].name);
             }}
             options={provinceList}
             placeholder="Choose state / province"
           />
           <DropdownInput
             label="City"
-            value={city}
-            onChange={setCity}
             options={cityList}
             placeholder="Choose city"
+            control={control}
+            name="city"
           />
         </div>
       </div>
@@ -242,16 +161,7 @@ const CareerInformationCard = ({ props }: CareerInformationCardProps) => {
             justifyContent: "space-between",
           }}
         >
-          <p
-            style={{
-              fontSize: 14,
-              color: "#181D27",
-              fontWeight: 700,
-              marginBottom: 8,
-            }}
-          >
-            Salary
-          </p>
+          <Label text="Salary" />
           <div
             style={{
               display: "flex",
@@ -263,30 +173,32 @@ const CareerInformationCard = ({ props }: CareerInformationCardProps) => {
             }}
           >
             <label className="switch">
-              <input
-                type="checkbox"
-                checked={salaryNegotiable}
-                onChange={() => setSalaryNegotiable(!salaryNegotiable)}
+              <Controller
+                control={control}
+                name="salaryNegotiable"
+                render={({ field: { onChange, value } }) => (
+                  <input type="checkbox" onChange={onChange} checked={value} />
+                )}
               />
               <span className="slider round"></span>
             </label>
             <span style={{ fontSize: 14, fontWeight: 500, color: "#414651" }}>
-              {salaryNegotiable ? "Negotiable" : "Fixed"}
+              Negotiable
             </span>
           </div>
         </div>
         <div style={{ display: "flex", gap: 16 }}>
           <CurrencyInput
             label="Minimum Salary"
-            value={minimumSalary}
-            onChange={setMinimumSalary}
-            placeholder="Enter minimum salary"
+            placeholder="0"
+            control={control}
+            name="minimumSalary"
           />
           <CurrencyInput
             label="Maximum Salary"
-            value={maximumSalary}
-            onChange={setMaximumSalary}
-            placeholder="Enter maximum salary"
+            placeholder="0"
+            control={control}
+            name="maximumSalary"
           />
         </div>
       </div>
@@ -294,233 +206,177 @@ const CareerInformationCard = ({ props }: CareerInformationCardProps) => {
   );
 };
 
-const JobDescriptionCard = ({ text, setText }: JobDescriptionCardProps) => {
+const JobDescriptionCard = ({
+  control,
+}: {
+  control: Control<CareerDetailsFormData>;
+}) => {
   return (
     <Card title="2. Job Description">
-      {/* TODO: Edit Rich Text Editor */}
-      <RichTextEditor setText={setText} text={text} />
+      <Controller
+        control={control}
+        name="description"
+        render={({ field: { onChange, value }, fieldState: { error } }) => (
+          <div>
+            <RichTextEditor
+              setText={onChange}
+              text={value}
+              hasError={!!error}
+            />
+            {error && (
+              <p
+                style={{
+                  color: "#F04438",
+                  fontSize: 14,
+                  marginBottom: 0,
+                  marginTop: 6,
+                  fontWeight: 400,
+                }}
+              >
+                {error.message}
+              </p>
+            )}
+          </div>
+        )}
+      />
     </Card>
   );
 };
 
-export const CareerDetailsSection = () => {
-  const [jobTitle, setJobTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [workSetup, setWorkSetup] = useState("");
-  const [salaryNegotiable, setSalaryNegotiable] = useState(true);
-  const [minimumSalary, setMinimumSalary] = useState("");
-  const [maximumSalary, setMaximumSalary] = useState("");
-  const [country, setCountry] = useState("Philippines");
-  const [province, setProvince] = useState("");
-  const [city, setCity] = useState("");
-  const [provinceList, setProvinceList] = useState([]);
-  const [cityList, setCityList] = useState([]);
-  const [employmentType, setEmploymentType] = useState("");
-  const [questions, setQuestions] = useState([
-    {
-      id: 1,
-      category: "CV Validation / Experience",
-      questionCountToAsk: null,
-      questions: [],
+interface CareerDetailsSectionRef {
+  onClick: () => void;
+}
+
+export const CareerDetailsSection = ({
+  ref,
+  setHasChanges,
+  setHasErrors,
+  setIsSavingCareer,
+  onDataChange,
+  data,
+  moveNextStep,
+  setCareerID,
+}: {
+  ref: Ref<CareerDetailsSectionRef>;
+  setHasChanges: (hasChanges: boolean) => void;
+  setHasErrors: (hasErrors: boolean) => void;
+  setIsSavingCareer: (isSavingCareer: boolean) => void;
+  onDataChange: (data: any) => void;
+  data: CareerDetailsFormData | null;
+  moveNextStep: () => void;
+  setCareerID: (careerID: string) => void;
+}) => {
+  const { user, orgID } = useAppContext();
+
+  const {
+    control,
+    setValue,
+    handleSubmit,
+    formState: { isDirty, errors },
+  } = useForm<CareerDetailsFormData>({
+    resolver: zodResolver(careerDetailsSchema),
+    defaultValues: {
+      jobTitle: data?.jobTitle || "",
+      description: data?.description || "",
+      employmentType: data?.employmentType || "",
+      workSetup: data?.workSetup || "",
+      country: data?.country || "Philippines",
+      province: data?.province || "",
+      city: data?.city || "",
+      minimumSalary: data?.minimumSalary || 0,
+      maximumSalary: data?.maximumSalary || 0,
+      salaryNegotiable: data?.salaryNegotiable || true,
     },
-    {
-      id: 2,
-      category: "Technical",
-      questionCountToAsk: null,
-      questions: [],
-    },
-    {
-      id: 3,
-      category: "Behavioral",
-      questionCountToAsk: null,
-      questions: [],
-    },
-    {
-      id: 4,
-      category: "Analytical",
-      questionCountToAsk: null,
-      questions: [],
-    },
-    {
-      id: 5,
-      category: "Others",
-      questionCountToAsk: null,
-      questions: [],
-    },
-  ]);
-  const [screeningSetting, setScreeningSetting] =
-    useState("Good Fit and above");
-  const [requireVideo, setRequireVideo] = useState(true);
+  });
 
   useEffect(() => {
-    const parseProvinces = () => {
-      setProvinceList(philippineCitiesAndProvinces.provinces);
-      const defaultProvince = philippineCitiesAndProvinces.provinces[0];
-      // if (!career?.province) {
-      //   setProvince(defaultProvince.name);
-      // }
-      const cities = philippineCitiesAndProvinces.cities.filter(
-        (city) => city.province === defaultProvince.key
-      );
-      setCityList(cities);
-      // if (!career?.location) {
-      //   setCity(cities[0].name);
-      // }
+    setHasChanges(isDirty);
+    setHasErrors(Object.keys(errors).length > 0);
+  }, [isDirty, errors]);
+
+  const onSubmit = async (data: CareerDetailsFormData) => {
+    console.log("Form submitted successfully:", data);
+
+    let userInfoSlice = {
+      image: user.image,
+      name: user.name,
+      email: user.email,
     };
-    parseProvinces();
-  }, []);
+
+    const careerData = {
+      ...data,
+      orgID,
+      lastEditedBy: userInfoSlice,
+      createdBy: userInfoSlice,
+      status: "inactive",
+    };
+
+    try {
+      setIsSavingCareer(true);
+      const response = await axios.post("/api/add-career", careerData);
+      if (response.status === 200) {
+        successToast("Career added successfully", 1300);
+        onDataChange(data);
+        moveNextStep();
+        setCareerID(response.data.career._id);
+      }
+    } catch (error) {
+      console.error(error);
+      errorToast("Failed to add career", 1300);
+    } finally {
+      setIsSavingCareer(false);
+    }
+  };
+
+  const onError = (errors: any) => {
+    console.log("Validation errors preventing submission:", errors);
+  };
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      onClick: () => {
+        handleSubmit(onSubmit, onError)();
+      },
+    }),
+    [handleSubmit, onSubmit, onError]
+  );
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        justifyContent: "space-between",
-        width: "100%",
-        gap: 16,
-        alignItems: "flex-start",
-      }}
-    >
+    <form onSubmit={handleSubmit(onSubmit)}>
       <div
         style={{
-          width: "70%",
           display: "flex",
-          flexDirection: "column",
-          gap: 8,
+          flexDirection: "row",
+          justifyContent: "space-between",
+          width: "100%",
+          gap: 24,
+          alignItems: "flex-start",
         }}
       >
-        <CareerInformationCard
-          props={{
-            jobTitle,
-            setJobTitle,
-            employmentType,
-            setEmploymentType,
-            workSetup,
-            setWorkSetup,
-            country,
-            setCountry,
-            province,
-            setProvince,
-            city,
-            setCity,
-            minimumSalary,
-            setMinimumSalary,
-            maximumSalary,
-            setMaximumSalary,
-            provinceList,
-            cityList,
-            setCityList,
-            salaryNegotiable,
-            setSalaryNegotiable,
+        <div
+          style={{
+            width: "70%",
+            display: "flex",
+            flexDirection: "column",
+            gap: 24,
           }}
-        />
-        <JobDescriptionCard text={description} setText={setDescription} />
-        <InterviewQuestionGeneratorV2
-          questions={questions}
-          setQuestions={(questions) => setQuestions(questions)}
-          jobTitle={jobTitle}
-          description={description}
-        />
-      </div>
+        >
+          <CareerInformationCard control={control} setValue={setValue} />
+          <JobDescriptionCard control={control} />
+        </div>
 
-      {/* FIXME: Right Sidebar */}
-      <div
-        style={{
-          width: "30%",
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-        }}
-      >
-        <TipsCard />
-
-        <div className="layered-card-outer">
-          <div className="layered-card-middle">
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                gap: 8,
-              }}
-            >
-              <div
-                style={{
-                  width: 32,
-                  height: 32,
-                  backgroundColor: "#181D27",
-                  borderRadius: "50%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <i
-                  className="la la-cog"
-                  style={{ color: "#FFFFFF", fontSize: 20 }}
-                ></i>
-              </div>
-              <span style={{ fontSize: 16, color: "#181D27", fontWeight: 700 }}>
-                Settings
-              </span>
-            </div>
-            <div className="layered-card-content">
-              <div style={{ display: "flex", flexDirection: "row", gap: 8 }}>
-                <i
-                  className="la la-id-badge"
-                  style={{ color: "#414651", fontSize: 20 }}
-                ></i>
-                <span>Screening Setting</span>
-              </div>
-              <CustomDropdown
-                onSelectSetting={(setting) => {
-                  setScreeningSetting(setting);
-                }}
-                screeningSetting={screeningSetting}
-                settingList={screeningSettingList}
-              />
-              <span>
-                This settings allows Jia to automatically endorse candidates who
-                meet the chosen criteria.
-              </span>
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  gap: 8,
-                }}
-              >
-                <div style={{ display: "flex", flexDirection: "row", gap: 8 }}>
-                  <i
-                    className="la la-video"
-                    style={{ color: "#414651", fontSize: 20 }}
-                  ></i>
-                  <span>Require Video Interview</span>
-                </div>
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "row",
-                    alignItems: "flex-start",
-                    gap: 8,
-                  }}
-                >
-                  <label className="switch">
-                    <input
-                      type="checkbox"
-                      checked={requireVideo}
-                      onChange={() => setRequireVideo(!requireVideo)}
-                    />
-                    <span className="slider round"></span>
-                  </label>
-                  <span>{requireVideo ? "Yes" : "No"}</span>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div
+          style={{
+            width: "30%",
+            display: "flex",
+            flexDirection: "column",
+            gap: 8,
+          }}
+        >
+          <TipsCard />
         </div>
       </div>
-    </div>
+    </form>
   );
 };

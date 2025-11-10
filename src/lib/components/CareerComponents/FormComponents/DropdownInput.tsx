@@ -1,17 +1,20 @@
 import CustomDropdown from "../CustomDropdown";
+import { Control, Controller } from "react-hook-form";
 
 export const DropdownInput = ({
   label,
-  value,
-  onChange,
+  control,
+  name,
   placeholder,
   options,
+  onChange,
 }: {
   label: string;
-  value: string;
+  control: Control<any>;
+  name: string;
   placeholder: string;
-  onChange: (value: string) => void;
   options: { name: string; icon?: string }[];
+  onChange?: (value: string) => void;
 }) => {
   return (
     <div style={{ flex: 1 }}>
@@ -25,11 +28,39 @@ export const DropdownInput = ({
       >
         {label}
       </p>
-      <CustomDropdown
-        onSelectSetting={onChange}
-        screeningSetting={value}
-        settingList={options}
-        placeholder={placeholder}
+      <Controller
+        control={control}
+        name={name}
+        render={({
+          field: { onChange: formOnChange, value },
+          fieldState: { error },
+        }) => (
+          <>
+            <CustomDropdown
+              hasError={!!error}
+              onSelect={(selectedValue) => {
+                formOnChange(selectedValue);
+                onChange?.(selectedValue);
+              }}
+              value={value}
+              options={options}
+              placeholder={placeholder}
+            />
+            {error && (
+              <p
+                style={{
+                  color: "#F04438",
+                  fontSize: 14,
+                  marginBottom: 0,
+                  marginTop: 6,
+                  fontWeight: 400,
+                }}
+              >
+                {error.message}
+              </p>
+            )}
+          </>
+        )}
       />
     </div>
   );

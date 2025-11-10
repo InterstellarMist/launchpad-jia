@@ -1,42 +1,36 @@
 import { NextResponse } from "next/server";
 import connectMongoDB from "@/lib/mongoDB/mongoDB";
 import { ObjectId } from "mongodb";
+import { UpdateCareerRequestSchema } from "@/lib/types/careerFormTypes";
 
 export async function POST(request: Request) {
   try {
-    let requestData = await request.json();
-    const { _id } = requestData;
+    const requestData = await request.json();
+    const result = UpdateCareerRequestSchema.safeParse(requestData);
 
-    // Validate required fields
-    if (!_id) {
+    if (!result.success) {
       return NextResponse.json(
-        { error: "Job Object ID is required" },
+        { error: result.error.message },
         { status: 400 }
       );
     }
 
+    const { _id, ...dataUpdates } = result.data;
+    dataUpdates.updatedAt = new Date();
+
     const { db } = await connectMongoDB();
-
-    let dataUpdates = { ...requestData };
-
-    delete dataUpdates._id;
-
-    const career = {
-      ...dataUpdates,
-    };
 
     await db
       .collection("careers")
-      .updateOne({ _id: new ObjectId(_id) }, { $set: career });
+      .updateOne({ _id: new ObjectId(_id) }, { $set: dataUpdates });
 
     return NextResponse.json({
       message: "Career updated successfully",
-      career,
     });
   } catch (error) {
-    console.error("Error adding career:", error);
+    console.error("Error updating career:", error);
     return NextResponse.json(
-      { error: "Failed to add career" },
+      { error: "Failed to update career" },
       { status: 500 }
     );
   }

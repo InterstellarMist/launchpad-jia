@@ -209,16 +209,24 @@ td {
 }
 
 .form-control {
-  border: 1px solid #e9eaeb !important;
+  border: 1px solid #e9eaeb;
   border-radius: 8px !important;
   color: #181d27 !important;
-  font-size: 1rem !important;
+  font-size: 1rem;
   box-shadow: 0px 1px 2px 0px #0A0D120D !important;
 
   &::placeholder {
     color: #717680 !important;
   }
 
+  &:focus {
+    // padding: 8px 11px;
+    outline: 2px solid #5e39d6 !important;
+    box-shadow: none !important;
+  }
+}
+
+.input-focus-ring {
   &:focus {
     // padding: 8px 11px;
     outline: 2px solid #5e39d6 !important;
@@ -809,7 +817,7 @@ th[scope="col"] {
   background: #fff;
   color: #181d27;
   border: 1px solid #e9eaeb;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border-radius: 8px;
   transition: 0.3s;
   cursor: pointer;
