@@ -7,23 +7,25 @@ export const CurrencyInput = ({
   name,
   placeholder,
 }: {
-  label: string;
+  label?: string;
   control: Control<any>;
   name: string;
   placeholder: string;
 }) => {
   return (
     <div style={{ flex: 1 }}>
-      <p
-        style={{
-          fontSize: 14,
-          color: "#414651",
-          fontWeight: 500,
-          marginBottom: 6,
-        }}
-      >
-        {label}
-      </p>
+      {label && (
+        <p
+          style={{
+            fontSize: 14,
+            color: "#414651",
+            fontWeight: 500,
+            marginBottom: 6,
+          }}
+        >
+          {label}
+        </p>
+      )}
       <Controller
         control={control}
         name={name}

@@ -11,6 +11,308 @@ import { CORE_API_URL } from "@/lib/Utils";
 import axios from "axios";
 import Markdown from "react-markdown";
 import { useEffect, useRef, useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Card } from "@/lib/components/CareerComponents/FormComponents/Card";
+import { TextInput } from "@/lib/components/CareerComponents/FormComponents/TextInput";
+import { Textarea } from "@/lib/components/CareerComponents/FormComponents/Textarea";
+import CustomDropdown from "@/lib/components/CareerComponents/CustomDropdown";
+import type { PreScreeningQuestion } from "@/lib/components/CareerComponents/FormComponents/PreScreeningQuestionsCard";
+import { CurrencyInput } from "@/lib/components/CareerComponents/FormComponents/CurrencyInput";
+import { DropdownInput } from "@/lib/components/CareerComponents/FormComponents/DropdownInput";
+
+function PreScreeningForm({
+  questions,
+  onSubmit,
+  submitting,
+}: {
+  questions: PreScreeningQuestion[];
+  onSubmit: (data: Record<string, any>) => void;
+  submitting: boolean;
+}) {
+  // Create dynamic Zod schema based on questions
+  const createValidationSchema = (questions: PreScreeningQuestion[]) => {
+    const schemaObject: Record<string, z.ZodTypeAny> = {};
+
+    questions.forEach((question) => {
+      if (question.type === "Range") {
+        // Range questions have nested structure with min and max subfields
+        schemaObject[question.id] = z
+          .object({
+            min: z.preprocess(
+              (val) => {
+                if (val === "" || val === null || val === undefined)
+                  return undefined;
+                const num =
+                  typeof val === "string" ? parseFloat(val) : Number(val);
+                return isNaN(num) ? undefined : num;
+              },
+              z
+                .number()
+                .min(
+                  question.min || 0,
+                  `Minimum value must be at least ${question.min || 0}`
+                )
+                .optional()
+            ),
+            max: z.preprocess(
+              (val) => {
+                if (val === "" || val === null || val === undefined)
+                  return undefined;
+                const num =
+                  typeof val === "string" ? parseFloat(val) : Number(val);
+                return isNaN(num) ? undefined : num;
+              },
+              z
+                .number()
+                .max(
+                  question.max || 1000000,
+                  `Maximum value must be at most ${question.max || 1000000}`
+                )
+                .optional()
+            ),
+          })
+          .refine(
+            (data) => {
+              if (
+                data.min !== undefined &&
+                data.max !== undefined &&
+                data.min !== null &&
+                data.max !== null
+              ) {
+                return data.max >= data.min;
+              }
+              return true;
+            },
+            {
+              message:
+                "Maximum value must be greater than or equal to minimum value",
+              path: ["max"],
+            }
+          )
+          .optional();
+      } else if (question.type === "Checkboxes") {
+        schemaObject[question.id] = z.array(z.string()).optional();
+      } else if (question.type === "Dropdown") {
+        schemaObject[question.id] = z.string().optional();
+      } else {
+        // Short answer and Long answer
+        schemaObject[question.id] = z.string().optional();
+      }
+    });
+
+    return z.object(schemaObject);
+  };
+
+  const validationSchema = createValidationSchema(questions);
+
+  const { control, handleSubmit } = useForm({
+    resolver: zodResolver(validationSchema),
+    defaultValues: questions.reduce((acc, question) => {
+      if (question.type === "Checkboxes") {
+        acc[question.id] = [];
+      } else if (question.type === "Range") {
+        // Range questions have nested structure with min and max
+        acc[question.id] = {
+          min: question.min || 0,
+          max: question.max || 0,
+        };
+      } else {
+        acc[question.id] = "";
+      }
+      return acc;
+    }, {} as Record<string, any>),
+  });
+
+  const renderQuestionInput = (question: PreScreeningQuestion) => {
+    switch (question.type) {
+      case "Short answer":
+        return (
+          <TextInput
+            control={control}
+            name={question.id}
+            placeholder="Enter your answer"
+          />
+        );
+
+      case "Long answer":
+        return (
+          <Controller
+            control={control}
+            name={question.id}
+            render={({ field: { onChange, value } }) => (
+              <Textarea
+                value={value || ""}
+                onChange={onChange}
+                placeholder="Enter your answer"
+                height={120}
+              />
+            )}
+          />
+        );
+
+      case "Dropdown":
+        return (
+          <div style={{ width: 320 }}>
+            <DropdownInput
+              options={
+                question.options?.map((opt) => ({ name: opt.name })) || []
+              }
+              placeholder="Select an option"
+              control={control}
+              name={question.id}
+            />
+          </div>
+        );
+
+      case "Checkboxes":
+        return (
+          <Controller
+            control={control}
+            name={question.id}
+            render={({ field: { onChange, value } }) => (
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: 12 }}
+              >
+                {question.options?.map((option) => (
+                  <label
+                    key={option.id}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={(value || []).includes(option.id)}
+                      onChange={(e) => {
+                        const currentValue = value || [];
+                        if (e.target.checked) {
+                          onChange([...currentValue, option.id]);
+                        } else {
+                          onChange(
+                            currentValue.filter(
+                              (id: string) => id !== option.id
+                            )
+                          );
+                        }
+                      }}
+                      style={{
+                        width: 18,
+                        height: 18,
+                        cursor: "pointer",
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: 16,
+                        color: "#181D27",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {option.name}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
+          />
+        );
+
+      case "Range":
+        return (
+          <div style={{ display: "flex", gap: 16 }}>
+            <CurrencyInput
+              label="Minimum"
+              placeholder="0"
+              control={control}
+              name={`${question.id}.min`}
+            />
+            <CurrencyInput
+              label="Maximum"
+              placeholder="0"
+              control={control}
+              name={`${question.id}.max`}
+            />
+          </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
+      <div>
+        <h2
+          style={{
+            fontSize: 18,
+            fontWeight: 700,
+            color: "#181D27",
+            marginBottom: 4,
+          }}
+        >
+          Quick Pre-screening
+        </h2>
+        <p
+          style={{
+            fontSize: 14,
+            color: "#717680",
+            fontWeight: 500,
+            marginBottom: 0,
+          }}
+        >
+          Just a few short questions to help your recruiters assess you faster.
+          Takes less than a minute.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          {questions.map((question) => (
+            <div className="layered-card-outer" key={question.id}>
+              <Card title={question.question}>
+                {renderQuestionInput(question)}
+              </Card>
+            </div>
+          ))}
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginTop: 32,
+          }}
+        >
+          <button
+            type="submit"
+            disabled={submitting}
+            style={{
+              padding: "12px 24px",
+              backgroundColor: submitting ? "#E9EAEB" : "#181D27",
+              color: "#FFFFFF",
+              border: "none",
+              borderRadius: "60px",
+              fontSize: 14,
+              fontWeight: 700,
+              cursor: submitting ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}
+          >
+            {submitting ? "Submitting..." : "Continue"}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
 
 export default function () {
   const fileInputRef = useRef(null);
@@ -36,8 +338,12 @@ export default function () {
     "Certifications",
     "Awards",
   ];
-  const step = ["Submit CV", "CV Screening", "Review Next Steps"];
+  const step = ["Submit CV", "Pre-Screening Questions", "Review Next Steps"];
   const stepStatus = ["Completed", "Pending", "In Progress"];
+
+  // Pre-screening questions answers
+  const [donePreScreening, setDonePreScreening] = useState(false);
+  const [submittingPreScreening, setSubmittingPreScreening] = useState(false);
 
   function handleDragOver(e) {
     e.preventDefault();
@@ -228,8 +534,6 @@ export default function () {
       }
     }
 
-    setCurrentStep(step[1]);
-
     if (hasChanges) {
       const formattedUserCV = cvSections.map((section) => ({
         name: section,
@@ -302,6 +606,46 @@ export default function () {
       });
   }
 
+  function handlePreScreening() {
+    // Check if there are pre-screening questions
+    const questions = interview?.preScreeningQuestions || [];
+    if (questions.length === 0) {
+      // No questions, proceed directly to CV screening
+      handleCVScreen();
+      setDonePreScreening(true);
+    } else {
+      setCurrentStep(step[1]);
+    }
+  }
+
+  function handlePreScreeningSubmit(data: Record<string, any>) {
+    console.log("Pre-screening answers", data);
+    setSubmittingPreScreening(true);
+
+    // Save answers to interview
+    axios({
+      method: "POST",
+      url: "/api/update-interview",
+      data: {
+        data: {
+          preScreeningAnswers: data,
+        },
+        uid: interview._id,
+      },
+    })
+      .then(() => {
+        setDonePreScreening(true);
+        handleCVScreen();
+      })
+      .catch((err) => {
+        alert("Error saving pre-screening answers. Please try again.");
+        console.log(err);
+      })
+      .finally(() => {
+        setSubmittingPreScreening(false);
+      });
+  }
+
   function handleFileSubmit(file) {
     setBuildingCV(true);
     setHasChanges(true);
@@ -350,6 +694,7 @@ export default function () {
       });
   }
 
+  console.log("donePreScreening", donePreScreening);
   return (
     <>
       {loading && <Loader loaderData={""} loaderType={""} />}
@@ -602,13 +947,24 @@ export default function () {
                       </div>
                     </div>
                   ))}
-                  <button onClick={handleCVScreen}>Submit CV</button>
+                  <button onClick={handlePreScreening}>Submit CV</button>
                 </div>
               )}
             </>
           )}
 
-          {currentStep == step[1] && (
+          {/* Pre-screening questions */}
+          {currentStep == step[1] &&
+            interview?.preScreeningQuestions &&
+            !donePreScreening && (
+              <PreScreeningForm
+                questions={interview.preScreeningQuestions}
+                onSubmit={handlePreScreeningSubmit}
+                submitting={submittingPreScreening}
+              />
+            )}
+
+          {currentStep == step[1] && donePreScreening && (
             <div className={styles.cvScreeningContainer}>
               <img alt="" src={assetConstants.loading} />
               <span className={styles.title}>Sit tight!</span>

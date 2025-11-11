@@ -126,7 +126,10 @@ export const Card = ({
             : "none",
         }}
       >
-        <div className="layered-card-content" style={{ gap: gap }}>
+        <div
+          className="layered-card-content"
+          style={{ gap: gap, width: "inherit" }}
+        >
           {children}
         </div>
       </div>
