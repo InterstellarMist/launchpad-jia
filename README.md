@@ -2,6 +2,93 @@
 
 Jia is a web application built with Next.js that appears to provide interview assistance, opportunity management, and communication tools. This README provides comprehensive information about the project, how to set it up, run it, and deploy it.
 
+## Whitecloak Launchpad Sprint Features
+
+This section documents the features implemented during the Whitecloak Launchpad program sprint round.
+
+### 1. Local Environment Setup Flow
+
+A comprehensive setup flow has been established to properly configure the local development environment with proper user roles and organization structure:
+
+**Setup Flow:**
+
+1. **Create Super Admin Account in MongoDB**
+
+   - Manually create a super admin account in your MongoDB database with appropriate permissions
+
+2. **Sign Up Using Super Admin Email**
+
+   - Use the super admin email to sign up through the application's authentication system
+
+3. **Create Organization via Admin Portal**
+
+   - Navigate to `/admin-portal`
+   - Create a new organization
+   - Add an admin as a recruiter account (you can also add yourself for testing purposes)
+
+4. **Sign Up Using Recruiter Email**
+
+   - Sign up using the recruiter email that was added to the organization
+
+5. **Create Organization Plans**
+   - Create organization plans in MongoDB with the following structure:
+   ```json
+   [
+     {
+       "_id": "plan-enterprise",
+       "name": "Enterprise",
+       "jobLimit": 100
+     }
+   ]
+   ```
+
+### 2. Segmented Career Form Implementation
+
+The add career page has been redesigned and implemented as a segmented form that:
+
+- Follows the existing codebase style and patterns
+- Adheres to the specified Figma prototype designs
+- Provides an improved user experience with step-by-step form completion
+- Maintains consistency with previous form implementations in the codebase
+- Uses **react-hook-form** for form state management and validation
+- Implements **Zod** schema validation for type-safe form validation
+- Organized into 5 distinct sections:
+  1. Career Details & Team Access
+  2. CV Review & Pre-Screening
+  3. AI Interview Setup
+  4. Pipeline Stages
+  5. Review Career
+
+**Location:** `/src/lib/components/CareerComponents/FormComponents/CareerFormV2.tsx`
+
+### 3. XSS Protection in Career API
+
+HTML sanitization has been implemented in the `/api/add-career` endpoint to secure against Cross-Site Scripting (XSS) attacks:
+
+- **HTML Sanitization**: All HTML content (such as job descriptions) is sanitized before being stored in the database
+- **Text Sanitization**: Text fields (job title, employment type, work setup, location fields) are sanitized to prevent malicious input
+- **Implementation**: Uses server-side sanitization utilities (`sanitizeHtml` and `sanitizeText`) to clean user input before database insertion
+
+**Security Benefits:**
+
+- Prevents XSS attacks through malicious HTML/JavaScript injection
+- Ensures data integrity and application security
+- Protects both stored data and rendered content
+
+**Location:** `/src/app/api/add-career/route.ts`
+
+### 4. Pre-screening Questions Integration
+
+The `/dashboard/upload-cv` page has been updated to include Pre-screening questions in the screening process:
+
+- Pre-screening questions are now integrated into the CV upload and screening workflow
+- Questions are presented to applicants during the CV upload process
+- Responses are captured and stored as part of the screening data
+
+**Location:** `/src/lib/components/screens/UploadCV.tsx`
+
+---
+
 ## Tech Stack
 
 - **Frontend**:
