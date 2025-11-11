@@ -143,7 +143,7 @@ function PreScreeningForm({
             name={question.id}
             render={({ field: { onChange, value } }) => (
               <Textarea
-                value={value || ""}
+                value={(value as string) || ""}
                 onChange={onChange}
                 placeholder="Enter your answer"
                 height={120}
@@ -171,54 +171,56 @@ function PreScreeningForm({
           <Controller
             control={control}
             name={question.id}
-            render={({ field: { onChange, value } }) => (
-              <div
-                style={{ display: "flex", flexDirection: "column", gap: 12 }}
-              >
-                {question.options?.map((option) => (
-                  <label
-                    key={option.id}
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 8,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={(value || []).includes(option.id)}
-                      onChange={(e) => {
-                        const currentValue = value || [];
-                        if (e.target.checked) {
-                          onChange([...currentValue, option.id]);
-                        } else {
-                          onChange(
-                            currentValue.filter(
-                              (id: string) => id !== option.id
-                            )
-                          );
-                        }
-                      }}
+            render={({ field: { onChange, value } }) => {
+              const currentValue = (value as string[]) || [];
+              return (
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 12 }}
+                >
+                  {question.options?.map((option) => (
+                    <label
+                      key={option.id}
                       style={{
-                        width: 18,
-                        height: 18,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
                         cursor: "pointer",
                       }}
-                    />
-                    <span
-                      style={{
-                        fontSize: 16,
-                        color: "#181D27",
-                        fontWeight: 500,
-                      }}
                     >
-                      {option.name}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            )}
+                      <input
+                        type="checkbox"
+                        checked={currentValue.includes(option.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            onChange([...currentValue, option.id]);
+                          } else {
+                            onChange(
+                              currentValue.filter(
+                                (id: string) => id !== option.id
+                              )
+                            );
+                          }
+                        }}
+                        style={{
+                          width: 18,
+                          height: 18,
+                          cursor: "pointer",
+                        }}
+                      />
+                      <span
+                        style={{
+                          fontSize: 16,
+                          color: "#181D27",
+                          fontWeight: 500,
+                        }}
+                      >
+                        {option.name}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              );
+            }}
           />
         );
 
