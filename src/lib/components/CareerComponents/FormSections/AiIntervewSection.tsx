@@ -246,16 +246,30 @@ export const AiIntervewSection = ({
   description: string;
 }) => {
   const { user } = useAppContext();
-  const { control, handleSubmit, formState } = useForm<AiInterviewFormData>({
-    resolver: zodResolver(AiInterviewSchema),
-    defaultValues: {
-      aiScreeningSetting: data?.aiScreeningSetting || "Good Fit and above",
-      aiSecretPrompt: data?.aiSecretPrompt || "",
-      requireVideo: data?.requireVideo ?? true,
-      aiInterviewQuestions:
-        data?.aiInterviewQuestions || defaultInterviewQuestions,
-    },
-  });
+  const { control, handleSubmit, formState, reset } =
+    useForm<AiInterviewFormData>({
+      resolver: zodResolver(AiInterviewSchema),
+      defaultValues: {
+        aiScreeningSetting: data?.aiScreeningSetting || "Good Fit and above",
+        aiSecretPrompt: data?.aiSecretPrompt || "",
+        requireVideo: data?.requireVideo ?? true,
+        aiInterviewQuestions:
+          data?.aiInterviewQuestions || defaultInterviewQuestions,
+      },
+    });
+
+  // Reset form values when data becomes available
+  useEffect(() => {
+    if (data) {
+      reset({
+        aiScreeningSetting: data.aiScreeningSetting || "Good Fit and above",
+        aiSecretPrompt: data.aiSecretPrompt || "",
+        requireVideo: data.requireVideo ?? true,
+        aiInterviewQuestions:
+          data.aiInterviewQuestions || defaultInterviewQuestions,
+      });
+    }
+  }, [data, reset]);
 
   useEffect(() => {
     setHasChanges(formState.isDirty);

@@ -5,6 +5,7 @@ import React, { useRef, useEffect } from "react";
 
 export default function RichTextEditor({ setText, text, hasError = false }) {
   const descriptionEditorRef = useRef(null);
+  const lastTextRef = useRef(text);
 
   const formatText = (command, value = null) => {
     document.execCommand(command, false, value);
@@ -13,7 +14,9 @@ export default function RichTextEditor({ setText, text, hasError = false }) {
 
   const handleDescriptionChange = () => {
     if (descriptionEditorRef.current) {
-      setText(descriptionEditorRef.current.innerHTML);
+      const newContent = descriptionEditorRef.current.innerHTML;
+      setText(newContent);
+      lastTextRef.current = newContent;
     }
   };
 
@@ -57,14 +60,40 @@ export default function RichTextEditor({ setText, text, hasError = false }) {
   }, []);
 
   useEffect(() => {
-    if (
-      descriptionEditorRef.current &&
-      !descriptionEditorRef.current.innerHTML &&
-      text
-    ) {
-      descriptionEditorRef.current.innerHTML = text;
+    if (descriptionEditorRef.current && text !== undefined) {
+      const currentContent = descriptionEditorRef.current.innerHTML.trim();
+      const textContent = (text || "").trim();
+      const lastText = (lastTextRef.current || "").trim();
+
+      // Update if editor is empty and text is provided (initial load or edit mode)
+      if ((!currentContent || currentContent === "<br>") && textContent) {
+        descriptionEditorRef.current.innerHTML = text;
+        lastTextRef.current = text;
+      }
+      // Update if text prop changed from empty/undefined to a value (data loaded in edit mode)
+      // This handles the case when form resets with data after component mount
+      else if (textContent && !lastText && textContent.length > 0) {
+        descriptionEditorRef.current.innerHTML = text;
+        lastTextRef.current = text;
+      }
+      // Update if text prop changed externally and editor content matches last known value
+      // This allows form resets to update the editor without overwriting user edits
+      else if (textContent && lastText && textContent !== lastText) {
+        const normalizedCurrent = currentContent.replace(/\s+/g, " ").trim();
+        const normalizedLast = lastText.replace(/\s+/g, " ").trim();
+
+        // Only update if current content matches last text (user hasn't edited)
+        if (
+          normalizedCurrent === normalizedLast ||
+          !currentContent ||
+          currentContent === "<br>"
+        ) {
+          descriptionEditorRef.current.innerHTML = text;
+          lastTextRef.current = text;
+        }
+      }
     }
-  }, []);
+  }, [text]);
 
   return (
     <div

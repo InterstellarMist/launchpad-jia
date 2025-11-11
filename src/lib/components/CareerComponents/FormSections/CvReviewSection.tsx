@@ -122,14 +122,27 @@ export const CvReviewSection = ({
   careerID: string;
 }) => {
   const { user } = useAppContext();
-  const { control, handleSubmit, formState } = useForm<CvReviewFormData>({
-    resolver: zodResolver(CvReviewSchema),
-    defaultValues: {
-      cvScreeningSetting: data?.cvScreeningSetting || "Good Fit and above",
-      cvSecretPrompt: data?.cvSecretPrompt || "",
-      preScreeningQuestions: data?.preScreeningQuestions || [],
-    },
-  });
+  const { control, handleSubmit, formState, reset } = useForm<CvReviewFormData>(
+    {
+      resolver: zodResolver(CvReviewSchema),
+      defaultValues: {
+        cvScreeningSetting: data?.cvScreeningSetting || "Good Fit and above",
+        cvSecretPrompt: data?.cvSecretPrompt || "",
+        preScreeningQuestions: data?.preScreeningQuestions || [],
+      },
+    }
+  );
+
+  // Reset form values when data becomes available
+  useEffect(() => {
+    if (data) {
+      reset({
+        cvScreeningSetting: data.cvScreeningSetting || "Good Fit and above",
+        cvSecretPrompt: data.cvSecretPrompt || "",
+        preScreeningQuestions: data.preScreeningQuestions || [],
+      });
+    }
+  }, [data, reset]);
 
   useEffect(() => {
     setHasChanges(formState.isDirty);

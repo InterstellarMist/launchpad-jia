@@ -256,6 +256,8 @@ export const CareerDetailsSection = ({
   data,
   moveNextStep,
   setCareerID,
+  formType,
+  careerID,
 }: {
   ref: Ref<CareerDetailsSectionRef>;
   setHasChanges: (hasChanges: boolean) => void;
@@ -265,10 +267,12 @@ export const CareerDetailsSection = ({
   data: CareerDetailsFormData | null;
   moveNextStep: () => void;
   setCareerID: (careerID: string) => void;
+  formType?: string;
+  careerID?: string;
 }) => {
   const { user, orgID } = useAppContext();
 
-  const { control, setValue, handleSubmit, formState } =
+  const { control, setValue, handleSubmit, formState, reset } =
     useForm<CareerDetailsFormData>({
       resolver: zodResolver(careerDetailsSchema),
       defaultValues: {
@@ -285,6 +289,24 @@ export const CareerDetailsSection = ({
       },
     });
 
+  // Reset form values when data becomes available
+  useEffect(() => {
+    if (data) {
+      reset({
+        jobTitle: data.jobTitle || "",
+        description: data.description || "",
+        employmentType: data.employmentType || "",
+        workSetup: data.workSetup || "",
+        country: data.country || "Philippines",
+        province: data.province || "",
+        city: data.city || "",
+        minimumSalary: data.minimumSalary || 0,
+        maximumSalary: data.maximumSalary || 0,
+        salaryNegotiable: data.salaryNegotiable ?? true,
+      });
+    }
+  }, [data, reset]);
+
   useEffect(() => {
     setHasChanges(formState.isDirty);
     setHasErrors(Object.keys(formState.errors).length > 0);
@@ -299,26 +321,50 @@ export const CareerDetailsSection = ({
       email: user.email,
     };
 
-    const careerData = {
-      ...data,
-      orgID,
-      lastEditedBy: userInfoSlice,
-      createdBy: userInfoSlice,
-      status: "inactive",
-    };
-
     try {
       setIsSavingCareer(true);
-      const response = await axios.post("/api/add-career", careerData);
-      if (response.status === 200) {
-        successToast("Career added successfully", 1300);
-        onDataChange(data);
-        moveNextStep();
-        setCareerID(response.data.career._id);
+
+      if (formType === "edit" && careerID) {
+        // Update existing career
+        const careerData = {
+          ...data,
+          _id: careerID,
+          lastEditedBy: userInfoSlice,
+          status: "inactive",
+        };
+
+        const response = await axios.post("/api/update-career", careerData);
+        if (response.status === 200) {
+          successToast("Career updated successfully", 1300);
+          onDataChange(data);
+          moveNextStep();
+        }
+      } else {
+        // Create new career
+        const careerData = {
+          ...data,
+          orgID,
+          lastEditedBy: userInfoSlice,
+          createdBy: userInfoSlice,
+          status: "inactive",
+        };
+
+        const response = await axios.post("/api/add-career", careerData);
+        if (response.status === 200) {
+          successToast("Career added successfully", 1300);
+          onDataChange(data);
+          moveNextStep();
+          setCareerID(response.data.career._id);
+        }
       }
     } catch (error) {
       console.error(error);
-      errorToast("Failed to add career", 1300);
+      errorToast(
+        formType === "edit"
+          ? "Failed to update career"
+          : "Failed to add career",
+        1300
+      );
     } finally {
       setIsSavingCareer(false);
     }

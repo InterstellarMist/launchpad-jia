@@ -42,6 +42,7 @@ export const assetConstants = {
   checkV3: iconsPath + "checkV3.svg",
   checkV4: iconsPath + "checkV5.svg",
   checkV5: iconsPath + "checkV6.svg",
+  checkCircle: iconsPath + "check-circle.svg",
   chevron: iconsPath + "chevron.svg",
   chevronV2: iconsPath + "chevronV2.svg",
   clock: iconsPath + "clock.svg",

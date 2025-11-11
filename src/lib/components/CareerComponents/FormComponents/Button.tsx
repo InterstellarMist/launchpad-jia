@@ -22,6 +22,9 @@ const variantStyles = {
     },
   },
   size: {
+    xs: {
+      padding: "6px",
+    },
     sm: {
       padding: "8px 14px",
     },
@@ -36,6 +39,7 @@ export const Button = ({
   onClick,
   variant = "primary",
   icon,
+  iconSize = 20,
   size = "sm",
   disabled = false,
   children,
@@ -44,22 +48,23 @@ export const Button = ({
   onClick: () => void;
   variant: "primary" | "secondary" | "ghost" | "destructive";
   icon?: string;
-  size?: "sm" | "md";
+  iconSize?: number;
+  size?: "xs" | "sm" | "md";
   disabled?: boolean;
   children?: React.ReactNode;
 }) => {
-  // const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-  //   e.preventDefault();
-  //   e.stopPropagation();
-  //   if (!disabled && onClick) {
-  //     onClick();
-  //   }
-  // };
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!disabled && onClick) {
+      onClick();
+    }
+  };
 
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={handleClick}
       style={{
         width: "fit-content",
         background: variantStyles.variant[variant].background,
@@ -85,7 +90,7 @@ export const Button = ({
       aria-disabled={disabled}
       disabled={disabled}
     >
-      {icon && <img src={icon} alt="icon" style={{ fontSize: 20 }} />}
+      {icon && <img src={icon} alt="icon" height={iconSize} width={iconSize} />}
       {text && (
         <span
           style={{

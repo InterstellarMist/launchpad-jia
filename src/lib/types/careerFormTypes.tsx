@@ -10,26 +10,46 @@ export interface CachedFormData {
 }
 
 // Career Details Schema
-export const careerDetailsSchema = z.object({
-  jobTitle: z.string().min(1, requiredErrorText),
-  description: z.string().min(1, requiredErrorText),
-  employmentType: z.string().min(1, requiredErrorText),
-  workSetup: z.string().min(1, requiredErrorText),
-  country: z.string().min(1, requiredErrorText),
-  province: z.string().min(1, requiredErrorText),
-  city: z.string().min(1, requiredErrorText),
-  minimumSalary: z
-    .transform(Number)
-    .pipe(z.number(requiredErrorText).gt(0, requiredErrorText)),
-  maximumSalary: z
-    .transform(Number)
-    .pipe(z.number(requiredErrorText).gt(0, requiredErrorText)),
-  salaryNegotiable: z.boolean(),
-});
+export const careerDetailsSchema = z
+  .object({
+    jobTitle: z.string().min(1, requiredErrorText),
+    description: z.string().min(1, requiredErrorText),
+    employmentType: z.string().min(1, requiredErrorText),
+    workSetup: z.string().min(1, requiredErrorText),
+    country: z.string().min(1, requiredErrorText),
+    province: z.string().min(1, requiredErrorText),
+    city: z.string().min(1, requiredErrorText),
+    minimumSalary: z
+      .transform(Number)
+      .pipe(z.number(requiredErrorText).gt(0, requiredErrorText)),
+    maximumSalary: z
+      .transform(Number)
+      .pipe(z.number(requiredErrorText).gt(0, requiredErrorText)),
+    salaryNegotiable: z.boolean(),
+  })
+  .refine(
+    (data) => {
+      if (
+        data.minimumSalary !== undefined &&
+        data.maximumSalary !== undefined
+      ) {
+        return (
+          data.minimumSalary >= 0 &&
+          data.maximumSalary >= 0 &&
+          data.minimumSalary < data.maximumSalary
+        );
+      }
+      return true;
+    },
+    {
+      message: "Minimum salary must be less than maximum salary",
+      path: ["minimumSalary"],
+    }
+  );
 
 export type CareerDetailsFormData = z.infer<typeof careerDetailsSchema>;
 
-export const AddCareerRequestSchema = careerDetailsSchema.extend({
+export const AddCareerRequestSchema = careerDetailsSchema.safeExtend({
   orgID: z.string(),
   lastEditedBy: z.any(),
   createdBy: z.any(),
@@ -137,12 +157,24 @@ export const AiInterviewSchema = z.object({
 
 export type AiInterviewFormData = z.infer<typeof AiInterviewSchema>;
 
+export const PipelineStagesSchema = z.object({
+  pipelineStages: z.array(
+    z.object({
+      id: z.string(),
+      name: z.string().min(1, "Pipeline stage name cannot be empty"),
+    })
+  ),
+});
+
+export type PipelineStagesFormData = z.infer<typeof PipelineStagesSchema>;
+
 // Update Career Request Schema
 export const UpdateCareerRequestSchema = z
   .object({
     ...AddCareerRequestSchema.shape,
     ...CvReviewSchema.shape,
     ...AiInterviewSchema.shape,
+    ...PipelineStagesSchema.shape,
     updatedAt: z.date(),
   })
   .partial()

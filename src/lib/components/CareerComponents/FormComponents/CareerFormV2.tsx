@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import { candidateActionToast, errorToast, successToast } from "@/lib/Utils";
 import { useAppContext } from "@/lib/context/AppContext";
+import axios from "axios";
 import CareerActionModal from "../CareerActionModal";
 import FullScreenLoadingAnimation from "../FullScreenLoadingAnimation";
 import { SegmentedFormProgressBar } from "./SegmentedFormProgressBar";
@@ -12,6 +13,7 @@ import { AiIntervewSection } from "../FormSections/AiIntervewSection";
 import { Button } from "./Button";
 import { assetConstants } from "@/lib/utils/constantsV2";
 import { PipelineStagesSection } from "../FormSections/PipelineStagesSection";
+import { ReviewCareerSection } from "../FormSections/ReviewCareerSection";
 import { CachedFormData } from "@/lib/types/careerFormTypes";
 
 const steps = [
@@ -25,15 +27,17 @@ const steps = [
 const TopBar = ({
   hasErrors,
   onSubmit,
-  onTestSubmit,
   cachedFormData,
+  currentStep,
 }: {
   hasErrors: boolean;
-  onSubmit: () => void;
-  onTestSubmit: () => void;
+  onSubmit: (status: string) => void;
   cachedFormData: CachedFormData;
+  currentStep: string;
 }) => {
   const jobTitle = cachedFormData?.careerDetails?.jobTitle;
+  const isReviewStep = currentStep === steps[4];
+
   return (
     <div
       style={{
@@ -66,16 +70,17 @@ const TopBar = ({
         <Button
           text="Save as Unpublished"
           variant="secondary"
-          onClick={() => onTestSubmit()}
+          onClick={() => onSubmit("inactive")}
           disabled={hasErrors}
         />
         <Button
-          text="Save and Continue"
+          icon={isReviewStep && assetConstants.checkCircle}
+          text={isReviewStep ? "Publish" : "Save and Continue"}
           variant="primary"
-          onClick={() => onSubmit()}
+          onClick={() => onSubmit(isReviewStep ? "active" : "inactive")}
           disabled={hasErrors}
         >
-          <img src={assetConstants.arrowWhite} alt="arrow" />
+          {!isReviewStep && <img src={assetConstants.arrowWhite} alt="arrow" />}
         </Button>
       </div>
     </div>
@@ -84,11 +89,14 @@ const TopBar = ({
 
 export default function SegmentedCareerForm({
   formType,
+  careerID: initialCareerID,
 }: {
   formType: string;
+  careerID?: string;
 }) {
   const [isSavingCareer, setIsSavingCareer] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState("");
+  const [isLoadingCareerData, setIsLoadingCareerData] = useState(false);
   // const savingCareerRef = useRef(false);
 
   // Cached data
@@ -98,18 +106,81 @@ export default function SegmentedCareerForm({
     aiInterview: null,
     pipelineStages: null,
   });
-  const [careerID, setCareerID] = useState<string | null>(null);
+  const { orgID, user } = useAppContext();
+  const [careerID, setCareerID] = useState<string | null>(
+    initialCareerID || null
+  );
 
   // Segmented Form Steps
   const [currentStep, setCurrentStep] = useState(steps[0]);
   const [hasChanges, setHasChanges] = useState(false);
   const [hasErrors, setHasErrors] = useState(false);
 
+  // Fetch career data when editing
+  useEffect(() => {
+    const fetchCareerData = async () => {
+      if (formType === "edit" && careerID) {
+        setIsLoadingCareerData(true);
+        try {
+          const response = await axios.post("/api/career-data", {
+            id: careerID,
+            orgID,
+          });
+
+          const careerData = response.data;
+
+          // Map fetched career data to cachedFormData structure
+          setCachedFormData({
+            careerDetails: {
+              jobTitle: careerData.jobTitle || "",
+              description: careerData.description || "",
+              employmentType: careerData.employmentType || "",
+              workSetup: careerData.workSetup || "",
+              country: careerData.country || "Philippines",
+              province: careerData.province || "",
+              city: careerData.city || "",
+              minimumSalary: careerData.minimumSalary || 0,
+              maximumSalary: careerData.maximumSalary || 0,
+              salaryNegotiable: careerData.salaryNegotiable ?? true,
+            },
+            cvReview: {
+              cvScreeningSetting:
+                careerData.cvScreeningSetting || "Good Fit and above",
+              cvSecretPrompt: careerData.cvSecretPrompt || "",
+              preScreeningQuestions: careerData.preScreeningQuestions || [],
+            },
+            aiInterview: {
+              aiScreeningSetting:
+                careerData.aiScreeningSetting || "Good Fit and above",
+              aiSecretPrompt: careerData.aiSecretPrompt || "",
+              requireVideo: careerData.requireVideo ?? true,
+              aiInterviewQuestions: careerData.aiInterviewQuestions || [],
+            },
+            pipelineStages: careerData.pipelineStages || null,
+          });
+
+          // Set careerID from fetched data
+          if (careerData._id) {
+            setCareerID(careerData._id);
+          }
+        } catch (error) {
+          console.error("Error fetching career data:", error);
+          errorToast("Failed to load career data", 1300);
+        } finally {
+          setIsLoadingCareerData(false);
+        }
+      }
+    };
+
+    fetchCareerData();
+  }, [formType, careerID, orgID]);
+
   // Refs for form sections
   const careerDetailsSectionRef = useRef(null);
   const cvReviewSectionRef = useRef(null);
   const aiInterviewSectionRef = useRef(null);
   const pipelineStagesSectionRef = useRef(null);
+  const reviewCareerSectionRef = useRef(null);
 
   const updateCachedFormData = (section: keyof CachedFormData, data: any) => {
     setCachedFormData({ ...cachedFormData, [section]: data });
@@ -120,7 +191,7 @@ export default function SegmentedCareerForm({
     setCurrentStep(steps[steps.indexOf(currentStep) + 1]);
   };
 
-  const onSubmit = () => {
+  const onSubmit = (status: string) => {
     // Trigger form submission based on current step
     if (currentStep === steps[0]) {
       careerDetailsSectionRef.current?.onClick();
@@ -134,13 +205,13 @@ export default function SegmentedCareerForm({
     } else if (currentStep === steps[3]) {
       pipelineStagesSectionRef.current?.onClick();
       console.log("Pipeline Stages section submit");
+    } else if (currentStep === steps[4]) {
+      reviewCareerSectionRef.current?.onClick(status);
+      console.log("Review Career section submit");
     }
   };
 
   const onTestSubmit = () => {
-    // errorToast("Please fill in all fields", 1300);
-
-    // successToast("Career added successfully", 1300);
     // candidateActionToast(
     //   <div
     //     style={{
@@ -162,10 +233,6 @@ export default function SegmentedCareerForm({
     //   ></i>
     // );
     // setShowSaveModal("active");
-    setIsSavingCareer(true);
-    setTimeout(() => {
-      setIsSavingCareer(false);
-    }, 1300);
   };
 
   const handleStepClick = (step: string) => {
@@ -188,14 +255,12 @@ export default function SegmentedCareerForm({
 
   return (
     <div className="col" style={{ marginBottom: "32px" }}>
-      {formType === "add" && (
-        <TopBar
-          onSubmit={onSubmit}
-          hasErrors={hasErrors}
-          onTestSubmit={onTestSubmit}
-          cachedFormData={cachedFormData}
-        />
-      )}
+      <TopBar
+        onSubmit={onSubmit}
+        hasErrors={hasErrors}
+        cachedFormData={cachedFormData}
+        currentStep={currentStep}
+      />
 
       <SegmentedFormProgressBar
         steps={steps}
@@ -217,6 +282,8 @@ export default function SegmentedCareerForm({
           }
           moveNextStep={moveNextStep}
           setCareerID={setCareerID}
+          formType={formType}
+          careerID={careerID || undefined}
         />
       )}
       {currentStep === steps[1] && (
@@ -228,7 +295,7 @@ export default function SegmentedCareerForm({
           data={cachedFormData.cvReview}
           onDataChange={(data: any) => updateCachedFormData("cvReview", data)}
           moveNextStep={moveNextStep}
-          careerID={careerID}
+          careerID={careerID || ""}
         />
       )}
       {currentStep === steps[2] && (
@@ -242,9 +309,9 @@ export default function SegmentedCareerForm({
             updateCachedFormData("aiInterview", data)
           }
           moveNextStep={moveNextStep}
-          careerID={careerID}
-          jobTitle={cachedFormData.careerDetails?.jobTitle}
-          description={cachedFormData.careerDetails?.description}
+          careerID={careerID || ""}
+          jobTitle={cachedFormData.careerDetails?.jobTitle || ""}
+          description={cachedFormData.careerDetails?.description || ""}
         />
       )}
       {currentStep === steps[3] && (
@@ -256,6 +323,17 @@ export default function SegmentedCareerForm({
           onDataChange={(data: any) =>
             updateCachedFormData("pipelineStages", data)
           }
+          careerID={careerID || ""}
+        />
+      )}
+      {currentStep === steps[4] && (
+        <ReviewCareerSection
+          ref={reviewCareerSectionRef}
+          data={cachedFormData}
+          onDataChange={() => {}}
+          moveNextStep={moveNextStep}
+          careerID={careerID || ""}
+          setIsSavingCareer={setIsSavingCareer}
         />
       )}
 
@@ -263,6 +341,12 @@ export default function SegmentedCareerForm({
         <CareerActionModal
           action={showSaveModal}
           onAction={(action) => console.log("action", action)}
+        />
+      )}
+      {isLoadingCareerData && (
+        <FullScreenLoadingAnimation
+          title="Loading career data..."
+          subtext="Please wait while we load the career information"
         />
       )}
       {isSavingCareer && (

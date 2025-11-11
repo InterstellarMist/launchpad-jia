@@ -1,4 +1,27 @@
+import { useState } from "react";
 import { assetConstants } from "@/lib/utils/constantsV2";
+
+export const Badge = ({ text }: { text: string }) => {
+  return (
+    <div
+      style={{
+        borderRadius: "20px",
+        border: "1px solid #D5D9EB",
+        backgroundColor: "#F8F9FC",
+        color: "#363F72",
+        fontSize: "12px",
+        fontWeight: 700,
+        width: 22,
+        height: 22,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {text}
+    </div>
+  );
+};
 
 export const Card = ({
   title,
@@ -8,6 +31,8 @@ export const Card = ({
   count,
   isOptional = false,
   button,
+  collapsible = false,
+  defaultCollapsed = false,
 }: {
   title: string;
   children: React.ReactNode;
@@ -16,10 +41,21 @@ export const Card = ({
   count?: number;
   isOptional?: boolean;
   button?: React.ReactNode;
+  collapsible?: boolean;
+  defaultCollapsed?: boolean;
 }) => {
+  const [isCollapsed, setIsCollapsed] = useState(defaultCollapsed);
+
+  const toggleCollapse = () => {
+    if (collapsible) {
+      setIsCollapsed(!isCollapsed);
+    }
+  };
+
   return (
     <div className="layered-card-middle">
       <div
+        onClick={toggleCollapse}
         style={{
           display: "flex",
           flexDirection: "row",
@@ -27,6 +63,7 @@ export const Card = ({
           justifyContent: "space-between",
           gap: 8,
           margin: "4px 12px 0px 12px",
+          cursor: collapsible ? "pointer" : "default",
         }}
       >
         <div
@@ -46,6 +83,18 @@ export const Card = ({
               style={{ marginRight: 0 }}
             />
           )}
+          {collapsible && (
+            <img
+              src={assetConstants.chevron}
+              alt="chevron"
+              height={20}
+              width={20}
+              style={{
+                transform: isCollapsed ? "rotate(0deg)" : "rotate(180deg)",
+                transition: "transform 0.2s ease",
+              }}
+            />
+          )}
           <h1
             style={{
               fontSize: 16,
@@ -63,30 +112,23 @@ export const Card = ({
               </span>
             )}
           </h1>
-          {count !== undefined && (
-            <div
-              style={{
-                borderRadius: "20px",
-                border: "1px solid #D5D9EB",
-                backgroundColor: "#F8F9FC",
-                color: "#363F72",
-                fontSize: "12px",
-                fontWeight: 700,
-                width: 22,
-                height: 22,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              {count}
-            </div>
-          )}
+          {count !== undefined && <Badge text={count.toString()} />}
         </div>
         {button && <div>{button}</div>}
       </div>
-      <div className="layered-card-content" style={{ gap: gap }}>
-        {children}
+      <div
+        style={{
+          overflow: "hidden",
+          maxHeight: collapsible && isCollapsed ? 0 : "10000px",
+          opacity: collapsible && isCollapsed ? 0 : 1,
+          transition: collapsible
+            ? "max-height 0.3s ease, opacity 0.3s ease"
+            : "none",
+        }}
+      >
+        <div className="layered-card-content" style={{ gap: gap }}>
+          {children}
+        </div>
       </div>
     </div>
   );
