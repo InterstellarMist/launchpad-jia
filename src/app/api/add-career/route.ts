@@ -3,7 +3,10 @@ import connectMongoDB from "@/lib/mongoDB/mongoDB";
 import { guid } from "@/lib/Utils";
 import { ObjectId } from "mongodb";
 import { AddCareerRequestSchema } from "@/lib/types/careerFormTypes";
-import { sanitizeHtml, sanitizeText } from "@/lib/utils/sanitize";
+
+// Route segment config for Vercel production
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
@@ -33,6 +36,9 @@ export async function POST(request: Request) {
       createdBy,
       status,
     } = result.data;
+
+    // Dynamically import sanitize functions to avoid jsdom/parse5 ES module issues
+    const { sanitizeHtml, sanitizeText } = await import("@/lib/utils/sanitize");
 
     // Sanitize HTML fields
     const sanitizedDescription = sanitizeHtml(description);
