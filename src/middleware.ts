@@ -2,8 +2,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const host = request.headers.get("host") || "";
   const pathname = request.nextUrl.pathname;
+
+  // Skip middleware for API routes
+  if (pathname.startsWith("/api/")) {
+    return NextResponse.next();
+  }
+
+  const host = request.headers.get("host") || "";
   const url = request.nextUrl.clone();
 
   if (pathname === "/" && host.includes("hellojia.ai")) {
