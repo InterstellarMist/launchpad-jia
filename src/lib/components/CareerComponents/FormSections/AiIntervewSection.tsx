@@ -246,11 +246,7 @@ export const AiIntervewSection = ({
   description: string;
 }) => {
   const { user } = useAppContext();
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<AiInterviewFormData>({
+  const { control, handleSubmit, formState } = useForm<AiInterviewFormData>({
     resolver: zodResolver(AiInterviewSchema),
     defaultValues: {
       aiScreeningSetting: data?.aiScreeningSetting || "Good Fit and above",
@@ -262,9 +258,9 @@ export const AiIntervewSection = ({
   });
 
   useEffect(() => {
-    setHasChanges(true);
-    setHasErrors(Object.keys(errors).length > 0);
-  }, [errors]);
+    setHasChanges(formState.isDirty);
+    setHasErrors(Object.keys(formState.errors).length > 0);
+  }, [formState]);
 
   const onSubmit = async (data: AiInterviewFormData) => {
     console.log("AI Interview form submitted successfully:", data);
@@ -314,11 +310,6 @@ export const AiIntervewSection = ({
     }),
     [handleSubmit, onSubmit, onError]
   );
-
-  // TODO: Get job title and description from the career details section
-  // const jobTitle = "Full Stack Developer";
-  // const description =
-  //   "We are looking for a full stack developer with 3 years of experience in React, Node.js, and MongoDB.";
 
   return (
     <form onSubmit={handleSubmit(onSubmit)}>

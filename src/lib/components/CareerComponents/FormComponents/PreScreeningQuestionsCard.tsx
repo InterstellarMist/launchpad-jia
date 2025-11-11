@@ -1,8 +1,8 @@
 "use client";
+import { useState, useEffect } from "react";
 import { assetConstants } from "@/lib/utils/constantsV2";
 import { Card } from "./Card";
 import { Button } from "./Button";
-import { useState } from "react";
 import { guid } from "@/lib/Utils";
 import CustomDropdown from "../CustomDropdown";
 import { TextInput } from "./TextInput";
@@ -527,6 +527,14 @@ const SuggestedQuestionsSection = ({
   preScreeningQuestions: PreScreeningQuestion[];
   onChange: (questions: PreScreeningQuestion[]) => void;
 }) => {
+  // Reset suggested questions on mount
+  useEffect(() => {
+    suggestedPreScreeningQuestions.map((question) => ({
+      ...question,
+      isAdded: false,
+    }));
+  }, []);
+
   const handleAddSuggestedQuestion = (
     question: SuggestedPreScreeningQuestion
   ) => {

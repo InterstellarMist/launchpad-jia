@@ -1,4 +1,4 @@
-import { Ref, useImperativeHandle } from "react";
+import { Ref, useEffect, useImperativeHandle } from "react";
 
 interface PipelineStagesSectionRef {
   onClick: () => void;
@@ -7,20 +7,41 @@ interface PipelineStagesSectionRef {
 export const PipelineStagesSection = ({
   ref,
   moveNextStep,
+  setHasChanges,
+  setHasErrors,
+  onDataChange,
 }: {
   ref: Ref<PipelineStagesSectionRef>;
   moveNextStep: () => void;
+  setHasChanges: (hasChanges: boolean) => void;
+  setHasErrors: (hasErrors: boolean) => void;
+  onDataChange: (data: any) => void;
 }) => {
   useImperativeHandle(
     ref,
     () => ({
       onClick: () => {
         console.log("Pipeline Stages section submit");
+        onDataChange([
+          {
+            id: "1",
+            name: "Pipeline Stage 1",
+            description: "Pipeline Stage 1 description",
+            color: "#000000",
+            nextStage: "Pipeline Stage 2",
+            currentStage: "Pipeline Stage 1",
+          },
+        ]);
         moveNextStep();
       },
     }),
     [moveNextStep]
   );
+
+  useEffect(() => {
+    setHasChanges(false);
+    setHasErrors(false);
+  }, []);
 
   return (
     <div

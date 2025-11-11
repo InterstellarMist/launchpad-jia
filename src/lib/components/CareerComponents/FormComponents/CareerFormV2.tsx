@@ -26,11 +26,14 @@ const TopBar = ({
   hasErrors,
   onSubmit,
   onTestSubmit,
+  cachedFormData,
 }: {
   hasErrors: boolean;
   onSubmit: () => void;
   onTestSubmit: () => void;
+  cachedFormData: CachedFormData;
 }) => {
+  const jobTitle = cachedFormData?.careerDetails?.jobTitle;
   return (
     <div
       style={{
@@ -43,7 +46,14 @@ const TopBar = ({
       }}
     >
       <h1 style={{ fontSize: "24px", fontWeight: 700, color: "#181D27" }}>
-        Add new career
+        {jobTitle ? (
+          <>
+            <span style={{ color: "#717680" }}>[Draft] </span>
+            {jobTitle}
+          </>
+        ) : (
+          "Add new career"
+        )}
       </h1>
       <div
         style={{
@@ -158,6 +168,24 @@ export default function SegmentedCareerForm({
     }, 1300);
   };
 
+  const handleStepClick = (step: string) => {
+    const cacheCount = Object.keys(cachedFormData).filter(
+      (key) => cachedFormData[key as keyof CachedFormData] !== null
+    ).length;
+    if (
+      steps.indexOf(step) > steps.indexOf(currentStep) &&
+      steps.indexOf(step) > cacheCount
+    ) {
+      errorToast("Submit to proceed to the next step", 1300);
+      return;
+    }
+    if (hasChanges) {
+      errorToast("Please save the changes first", 1300);
+      return;
+    }
+    setCurrentStep(step);
+  };
+
   return (
     <div className="col" style={{ marginBottom: "32px" }}>
       {formType === "add" && (
@@ -165,6 +193,7 @@ export default function SegmentedCareerForm({
           onSubmit={onSubmit}
           hasErrors={hasErrors}
           onTestSubmit={onTestSubmit}
+          cachedFormData={cachedFormData}
         />
       )}
 
@@ -173,7 +202,7 @@ export default function SegmentedCareerForm({
         currentStep={currentStep}
         hasErrors={hasErrors}
         hasChanges={hasChanges}
-        onClick={setCurrentStep}
+        onClick={handleStepClick}
       />
 
       {currentStep === steps[0] && (
@@ -222,6 +251,11 @@ export default function SegmentedCareerForm({
         <PipelineStagesSection
           ref={pipelineStagesSectionRef}
           moveNextStep={moveNextStep}
+          setHasChanges={setHasChanges}
+          setHasErrors={setHasErrors}
+          onDataChange={(data: any) =>
+            updateCachedFormData("pipelineStages", data)
+          }
         />
       )}
 

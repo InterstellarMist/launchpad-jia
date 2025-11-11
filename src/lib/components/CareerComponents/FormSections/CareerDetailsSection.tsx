@@ -268,31 +268,27 @@ export const CareerDetailsSection = ({
 }) => {
   const { user, orgID } = useAppContext();
 
-  const {
-    control,
-    setValue,
-    handleSubmit,
-    formState: { isDirty, errors },
-  } = useForm<CareerDetailsFormData>({
-    resolver: zodResolver(careerDetailsSchema),
-    defaultValues: {
-      jobTitle: data?.jobTitle || "",
-      description: data?.description || "",
-      employmentType: data?.employmentType || "",
-      workSetup: data?.workSetup || "",
-      country: data?.country || "Philippines",
-      province: data?.province || "",
-      city: data?.city || "",
-      minimumSalary: data?.minimumSalary || 0,
-      maximumSalary: data?.maximumSalary || 0,
-      salaryNegotiable: data?.salaryNegotiable || true,
-    },
-  });
+  const { control, setValue, handleSubmit, formState } =
+    useForm<CareerDetailsFormData>({
+      resolver: zodResolver(careerDetailsSchema),
+      defaultValues: {
+        jobTitle: data?.jobTitle || "",
+        description: data?.description || "",
+        employmentType: data?.employmentType || "",
+        workSetup: data?.workSetup || "",
+        country: data?.country || "Philippines",
+        province: data?.province || "",
+        city: data?.city || "",
+        minimumSalary: data?.minimumSalary || 0,
+        maximumSalary: data?.maximumSalary || 0,
+        salaryNegotiable: data?.salaryNegotiable || true,
+      },
+    });
 
   useEffect(() => {
-    setHasChanges(isDirty);
-    setHasErrors(Object.keys(errors).length > 0);
-  }, [isDirty, errors]);
+    setHasChanges(formState.isDirty);
+    setHasErrors(Object.keys(formState.errors).length > 0);
+  }, [formState]);
 
   const onSubmit = async (data: CareerDetailsFormData) => {
     console.log("Form submitted successfully:", data);

@@ -122,11 +122,7 @@ export const CvReviewSection = ({
   careerID: string;
 }) => {
   const { user } = useAppContext();
-  const {
-    control,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<CvReviewFormData>({
+  const { control, handleSubmit, formState } = useForm<CvReviewFormData>({
     resolver: zodResolver(CvReviewSchema),
     defaultValues: {
       cvScreeningSetting: data?.cvScreeningSetting || "Good Fit and above",
@@ -136,9 +132,9 @@ export const CvReviewSection = ({
   });
 
   useEffect(() => {
-    setHasChanges(true);
-    setHasErrors(Object.keys(errors).length > 0);
-  }, [errors]);
+    setHasChanges(formState.isDirty);
+    setHasErrors(Object.keys(formState.errors).length > 0);
+  }, [formState]);
 
   const onSubmit = async (data: CvReviewFormData) => {
     console.log("CV Review form submitted successfully:", data);

@@ -3,7 +3,7 @@ import connectMongoDB from "@/lib/mongoDB/mongoDB";
 import { guid } from "@/lib/Utils";
 import { ObjectId } from "mongodb";
 import { AddCareerRequestSchema } from "@/lib/types/careerFormTypes";
-// import { sanitizeHtml, sanitizeText } from "@/lib/utils/sanitize";
+import { sanitizeHtml, sanitizeText } from "@/lib/utils/sanitize";
 
 export async function POST(request: Request) {
   try {
@@ -34,14 +34,14 @@ export async function POST(request: Request) {
       status,
     } = result.data;
 
-    // // Sanitize HTML fields
-    // const sanitizedDescription = sanitizeHtml(description);
-    // const sanitizedJobTitle = sanitizeText(jobTitle);
-    // const sanitizedEmploymentType = sanitizeText(employmentType);
-    // const sanitizedWorkSetup = sanitizeText(workSetup);
-    // const sanitizedCountry = sanitizeText(country);
-    // const sanitizedProvince = sanitizeText(province);
-    // const sanitizedCity = sanitizeText(city);
+    // Sanitize HTML fields
+    const sanitizedDescription = sanitizeHtml(description);
+    const sanitizedJobTitle = sanitizeText(jobTitle);
+    const sanitizedEmploymentType = sanitizeText(employmentType);
+    const sanitizedWorkSetup = sanitizeText(workSetup);
+    const sanitizedCountry = sanitizeText(country);
+    const sanitizedProvince = sanitizeText(province);
+    const sanitizedCity = sanitizeText(city);
 
     const { db } = await connectMongoDB();
 
@@ -111,13 +111,13 @@ export async function POST(request: Request) {
       createdBy,
       orgID,
       status: status || "inactive",
-      jobTitle,
-      description,
-      employmentType,
-      workSetup,
-      country,
-      province,
-      city,
+      jobTitle: sanitizedJobTitle,
+      description: sanitizedDescription,
+      employmentType: sanitizedEmploymentType,
+      workSetup: sanitizedWorkSetup,
+      country: sanitizedCountry,
+      province: sanitizedProvince,
+      city: sanitizedCity,
       minimumSalary,
       maximumSalary,
       salaryNegotiable,
