@@ -110,7 +110,7 @@ export const CustomTextPair = ({
 }) => {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      <p
+      <div
         style={{
           fontSize: 14,
           color: "#181D27",
@@ -124,7 +124,7 @@ export const CustomTextPair = ({
             <Badge text={badgeText} />
           </span>
         )}
-      </p>
+      </div>
       {children}
     </div>
   );
