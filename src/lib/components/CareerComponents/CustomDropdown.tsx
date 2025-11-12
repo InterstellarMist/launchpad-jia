@@ -129,13 +129,14 @@ export default function CustomDropdown(props) {
         createPortal(
           <div
             ref={menuRef}
-            className={`dropdown-menu w-100 mt-1 org-dropdown-anim show`}
+            className={`dropdown-menu mt-1 org-dropdown-anim show`}
             style={{
               display: "block",
               position: "fixed",
               top: `${menuPosition.top}px`,
               left: `${menuPosition.left}px`,
-              width: `${menuPosition.width}px`,
+              width: "auto",
+              minWidth: `${menuPosition.width}px`,
               zIndex: 9999,
               backgroundColor: "#fff",
               border: "1px solid #E9EAEB",
