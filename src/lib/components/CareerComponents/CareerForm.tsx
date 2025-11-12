@@ -592,11 +592,11 @@ export default function CareerForm({
                   <span>Screening Setting</span>
                 </div>
                 <CustomDropdown
-                  onSelectSetting={(setting) => {
+                  onSelect={(setting) => {
                     setScreeningSetting(setting);
                   }}
-                  screeningSetting={screeningSetting}
-                  settingList={screeningSettingList}
+                  value={screeningSetting}
+                  options={screeningSettingList}
                 />
                 <span>
                   This settings allows Jia to automatically endorse candidates
@@ -682,21 +682,21 @@ export default function CareerForm({
                 </span>
                 <span>Employment Type</span>
                 <CustomDropdown
-                  onSelectSetting={(employmentType) => {
+                  onSelect={(employmentType) => {
                     setEmploymentType(employmentType);
                   }}
-                  screeningSetting={employmentType}
-                  settingList={employmentTypeOptions}
+                  value={employmentType}
+                  options={employmentTypeOptions}
                   placeholder="Select Employment Type"
                 />
 
                 <span>Work Setup Arrangement</span>
                 <CustomDropdown
-                  onSelectSetting={(setting) => {
+                  onSelect={(setting) => {
                     setWorkSetup(setting);
                   }}
-                  screeningSetting={workSetup}
-                  settingList={workSetupOptions}
+                  value={workSetup}
+                  options={workSetupOptions}
                   placeholder="Select Work Setup"
                 />
 
@@ -834,17 +834,17 @@ export default function CareerForm({
 
                 <span>Country</span>
                 <CustomDropdown
-                  onSelectSetting={(setting) => {
+                  onSelect={(setting) => {
                     setCountry(setting);
                   }}
-                  screeningSetting={country}
-                  settingList={[]}
+                  value={country}
+                  options={[]}
                   placeholder="Select Country"
                 />
 
                 <span>State / Province</span>
                 <CustomDropdown
-                  onSelectSetting={(province) => {
+                  onSelect={(province) => {
                     setProvince(province);
                     const provinceObj = provinceList.find(
                       (p) => p.name === province
@@ -855,18 +855,18 @@ export default function CareerForm({
                     setCityList(cities);
                     setCity(cities[0].name);
                   }}
-                  screeningSetting={province}
-                  settingList={provinceList}
+                  value={province}
+                  options={provinceList}
                   placeholder="Select State / Province"
                 />
 
                 <span>City</span>
                 <CustomDropdown
-                  onSelectSetting={(city) => {
+                  onSelect={(city) => {
                     setCity(city);
                   }}
-                  screeningSetting={city}
-                  settingList={cityList}
+                  value={city}
+                  options={cityList}
                   placeholder="Select City"
                 />
               </div>
